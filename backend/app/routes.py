@@ -83,12 +83,10 @@ async def websocket_endpoint(socket: WebSocket) -> None:
     except (WebSocketDisconnect, OSError, asyncio.TimeoutError):
         logger.info("transport closed session=%s", session.id)
     finally:
-        for task in tasks:
-            task.cancel()
-        await asyncio.gather(*tasks, return_exceptions=True)
-        manager.remove(session)
         try:
-            await session.close()
-        except (WebSocketDisconnect, OSError, asyncio.TimeoutError):
-            pass
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+        finally:
+            await manager.disconnect(session)
         logger.info("disconnected session=%s active=%d", session.id, manager.active_count)

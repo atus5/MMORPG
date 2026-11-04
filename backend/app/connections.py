@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from dataclasses import dataclass, field
 from uuid import uuid4
 
@@ -23,6 +24,7 @@ class Session:
     x: float = field(init=False)
     y: float = field(init=False)
     last_step: float = field(init=False)
+    _close_started: bool = field(default=False, init=False, repr=False)
 
     def __post_init__(self) -> None:
         self.x = self.settings.world_width / 2
@@ -51,13 +53,24 @@ class Session:
 
     async def send(self, message: Message) -> None:
         async with self.send_lock:
-            if self.socket.application_state != WebSocketState.CONNECTED:
+            if (
+                self._close_started
+                or self.socket.application_state != WebSocketState.CONNECTED
+                or self.socket.client_state != WebSocketState.CONNECTED
+            ):
                 raise WebSocketDisconnect(code=1000)
             await asyncio.wait_for(self.socket.send_json(message.model_dump()), self.settings.send_timeout)
 
     async def close(self, code: int = 1000, reason: str = "") -> None:
         async with self.send_lock:
-            if self.socket.application_state == WebSocketState.CONNECTED:
+            if self._close_started:
+                return
+            # A failed close must not be retried by concurrent/repeated cleanup callers.
+            self._close_started = True
+            if (
+                self.socket.application_state == WebSocketState.CONNECTED
+                and self.socket.client_state == WebSocketState.CONNECTED
+            ):
                 await asyncio.wait_for(
                     self.socket.close(code=code, reason=reason), self.settings.send_timeout
                 )
@@ -83,3 +96,11 @@ class ConnectionManager:
 
     def remove(self, session: Session) -> None:
         self.sessions.pop(session.id, None)
+
+    async def disconnect(self, session: Session) -> None:
+        # Release ownership before transport cleanup, even if close fails or is cancelled.
+        self.remove(session)
+        try:
+            await session.close()
+        except (WebSocketDisconnect, OSError, asyncio.TimeoutError, RuntimeError):
+            logging.getLogger("tu.websocket").info("cleanup transport closed session=%s", session.id)
