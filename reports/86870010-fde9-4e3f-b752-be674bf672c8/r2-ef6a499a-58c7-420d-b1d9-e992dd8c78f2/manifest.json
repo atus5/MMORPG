@@ -1,0 +1,407 @@
+{
+  "canonicalization": "Manifest JSON: sorted keys, 2 spaces, UTF-8 without BOM, LF, final newline. Entries sorted by relative path. Source/previous snapshot bytes not reencoded.",
+  "created_at": "2026-11-04T12:28:52.854798+07:00",
+  "files": [
+    {
+      "bytes": 54705,
+      "path": "changes-r1-to-r2.patch",
+      "role": "developer_incremental_text_diff_lf",
+      "sha256": "542318c69bff8232aaf60c5cb6454e647d13f5fa802a2dee24a8b58fec285f20"
+    },
+    {
+      "bytes": 1127,
+      "path": "diff-r2.patch",
+      "role": "cumulative_tracked_git_diff",
+      "sha256": "f0b75a89dfa01d4e31d07db7d17f46f5f3b6c6ebf8f35f8964ea11bab3e591d6"
+    },
+    {
+      "bytes": 5230,
+      "path": "evidence/controller-tests.log",
+      "role": "observed_test_output_utf8_transcription",
+      "sha256": "b3d312dfe651835c2bb42a3af97cc5d1dcee21a7d3bf07a283f6789e88a8e2ee"
+    },
+    {
+      "bytes": 836,
+      "path": "evidence/desktop-tests.log",
+      "role": "observed_test_output_utf8_transcription",
+      "sha256": "524ce4087f714823eadedd8afc90c397b7b738c15f0b6d8c9e8c46f0dd95da64"
+    },
+    {
+      "bytes": 29596,
+      "path": "evidence/review-r1.md",
+      "role": "unchanged_gemini_r1_report",
+      "sha256": "b2e4508b7b7d095aeb6047cb619a874982ad032a4d0c741e3e18d29a070dae93",
+      "source_path": "reports/2026-11-04-89fb280812aa0643edb9fc6f3fcbd8998b2cc7d1-desktop-r1.md"
+    },
+    {
+      "bytes": 3404,
+      "path": "fix-response-r2.md",
+      "role": "developer_finding_dispositions",
+      "sha256": "dc9869041a7814a16454cf48e47d4f88a175bc335c7cc90f223422a46134a423"
+    },
+    {
+      "bytes": 15258,
+      "path": "inventory-r2.json",
+      "role": "included_excluded_inventory",
+      "sha256": "6cd663b6064260b6b618c22d9fdcf89fcc934d668784d94fcc6a4c2c0627a8e9"
+    },
+    {
+      "bytes": 1732,
+      "path": "previous-r1/.agents/agents/gemini-reviewer.md",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "592564f0a8f640dc999f015443015d39ee18c780d2c89a9b6a2664337b38f8ed",
+      "source_path": ".agents/agents/gemini-reviewer.md"
+    },
+    {
+      "bytes": 2358,
+      "path": "previous-r1/.agents/skills/gemini-reviewer/SKILL.md",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "2ff25ef52b1164040c9288de9c8309de86cd2a1a9645f6a3999920af1a730cb3",
+      "source_path": ".agents/skills/gemini-reviewer/SKILL.md"
+    },
+    {
+      "bytes": 7707,
+      "path": "previous-r1/.automation/DESKTOP_CAPABILITIES.md",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "1d38faded907cb4486d1aebfba895a1b08a145e966ff2a56789567aa631478e0",
+      "source_path": ".automation/DESKTOP_CAPABILITIES.md"
+    },
+    {
+      "bytes": 342,
+      "path": "previous-r1/.automation/DESKTOP_ONLY",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "920ef2baa7c409319f01b929be7c9ab106d2bd9fb1de99f62fc550091d73a0ab",
+      "source_path": ".automation/DESKTOP_ONLY"
+    },
+    {
+      "bytes": 14679,
+      "path": "previous-r1/.automation/README.md",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "aad9d7556f66dbec06d34341f852b580af05d485a9ee842c277c4aa749119238",
+      "source_path": ".automation/README.md"
+    },
+    {
+      "bytes": 3059,
+      "path": "previous-r1/.automation/check-environment.ps1",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "a4712e16ddf4e6b9208f83b78b94213c55bac29e8e3e519681b5ea96762f58f7",
+      "source_path": ".automation/check-environment.ps1"
+    },
+    {
+      "bytes": 16984,
+      "path": "previous-r1/.automation/common.ps1",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "53e27e6faf62737614377c41d066a849b310065a37060392b2b625d9f47c8415",
+      "source_path": ".automation/common.ps1"
+    },
+    {
+      "bytes": 670,
+      "path": "previous-r1/.automation/config.json",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "aa3f5b968510372aa882772f1049b0047041892320a91a8f41f676d138c6fece",
+      "source_path": ".automation/config.json"
+    },
+    {
+      "bytes": 16041,
+      "path": "previous-r1/.automation/controller.ps1",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "42733eda449bc34af355fda3104412c5ca7bd27baad56aaa1192e43f60fd3d6b",
+      "source_path": ".automation/controller.ps1"
+    },
+    {
+      "bytes": 1468,
+      "path": "previous-r1/.automation/fix.schema.json",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "06d762d4abec5353ade11df180af6385232d30a8d327e2b402729099c6587628",
+      "source_path": ".automation/fix.schema.json"
+    },
+    {
+      "bytes": 3487,
+      "path": "previous-r1/.automation/install-hooks.ps1",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "5e7775698e600de6c3878745b82313787ea114eb7398c3ad6a81d6e9f5d16238",
+      "source_path": ".automation/install-hooks.ps1"
+    },
+    {
+      "bytes": 7626,
+      "path": "previous-r1/.automation/invoke-codex.ps1",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "0a429ba8a8a022c61baefb53def6bf0d45f063a99d77920e1da121c21382514b",
+      "source_path": ".automation/invoke-codex.ps1"
+    },
+    {
+      "bytes": 8519,
+      "path": "previous-r1/.automation/invoke-gemini.ps1",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "d929829ebcf28783c4f1a8f50cb3d814fa6d478a65b929468c96f80565852c09",
+      "source_path": ".automation/invoke-gemini.ps1"
+    },
+    {
+      "bytes": 605,
+      "path": "previous-r1/.automation/orchestrator.ps1",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "3d77e60ae8fc77d1f82277244de1922304219408240dd37e1af88e25e133755d",
+      "source_path": ".automation/orchestrator.ps1"
+    },
+    {
+      "bytes": 3363,
+      "path": "previous-r1/.automation/review.schema.json",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "15d3a36a561d5d89cd9748b60b47a0f65e6cadda6022f3bb38e89bd7c103f926",
+      "source_path": ".automation/review.schema.json"
+    },
+    {
+      "bytes": 304,
+      "path": "previous-r1/.automation/reviewer-deny-tools.toml",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "97310fe6edad9172f7553157c2d92db6b487c4f5bdb9ad509d7ff43c46f0bfd6",
+      "source_path": ".automation/reviewer-deny-tools.toml"
+    },
+    {
+      "bytes": 4525,
+      "path": "previous-r1/.automation/tests/desktop-policy.tests.ps1",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "f3a812c696d975ee277f5991c1195964164af78e59ad2f04f7f138c86ebc0b9d",
+      "source_path": ".automation/tests/desktop-policy.tests.ps1"
+    },
+    {
+      "bytes": 23341,
+      "path": "previous-r1/.automation/tests/run-tests.ps1",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "ae0258be73c872c56d36588d4ba472ef3120176447f5b56d667904cb0c17a371",
+      "source_path": ".automation/tests/run-tests.ps1"
+    },
+    {
+      "bytes": 584,
+      "path": "previous-r1/.githooks/post-commit",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "34b2f6e27f78c3b6e5a44d953725a9491cbf74a4b566652ac0087ac061d433df",
+      "source_path": ".githooks/post-commit"
+    },
+    {
+      "bytes": 115,
+      "path": "previous-r1/.gitignore",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "ada39342a93e4681e34d41e837fe96f4515182bd08abb70ea73eef50bac3eab5",
+      "source_path": ".gitignore"
+    },
+    {
+      "bytes": 3977,
+      "path": "previous-r1/AGENTS.md",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "704a7b8aa513981902a026af80cd776385941cad22df11acda946b788ddef755",
+      "source_path": "AGENTS.md"
+    },
+    {
+      "bytes": 8592,
+      "path": "previous-r1/DESKTOP_WORKFLOW.md",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "54c904a560fd141f39b3fb1621f6b122deeeaf20de727a8dadee48fa216a4854",
+      "source_path": "DESKTOP_WORKFLOW.md"
+    },
+    {
+      "bytes": 5372,
+      "path": "previous-r1/GEMINI_REVIEW.md",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "f21983e008df77fe4498b0c21c3b0980938a3128d0764e6e81409f570aaa181c",
+      "source_path": "GEMINI_REVIEW.md"
+    },
+    {
+      "bytes": 1005,
+      "path": "previous-r1/README.md",
+      "role": "pre_r2_bytes_matching_r1_review_manifest",
+      "sha256": "935f031d8de6525a82fb8399a97e3a702638587591af016eef47484427b24cac",
+      "source_path": "README.md"
+    },
+    {
+      "bytes": 2358,
+      "path": "snapshot/.agents/agents/gemini-reviewer.md",
+      "role": "current_snapshot",
+      "sha256": "f5b4b79c91e44416762bb4906c4d10c3f1153612a5222f884c52f8b24dc453ca",
+      "source_path": ".agents/agents/gemini-reviewer.md"
+    },
+    {
+      "bytes": 2955,
+      "path": "snapshot/.agents/skills/gemini-reviewer/SKILL.md",
+      "role": "current_snapshot",
+      "sha256": "21f2b2c9f1f95f8bc9bc3721b83b1177e8e0fa4e1cb17d228e712fe51c102418",
+      "source_path": ".agents/skills/gemini-reviewer/SKILL.md"
+    },
+    {
+      "bytes": 9801,
+      "path": "snapshot/.automation/DESKTOP_CAPABILITIES.md",
+      "role": "current_snapshot",
+      "sha256": "08598587e849317c241f8f54d018efbd09b40570c3e5c5907b8b410159d1577e",
+      "source_path": ".automation/DESKTOP_CAPABILITIES.md"
+    },
+    {
+      "bytes": 342,
+      "path": "snapshot/.automation/DESKTOP_ONLY",
+      "role": "current_snapshot",
+      "sha256": "920ef2baa7c409319f01b929be7c9ab106d2bd9fb1de99f62fc550091d73a0ab",
+      "source_path": ".automation/DESKTOP_ONLY"
+    },
+    {
+      "bytes": 15221,
+      "path": "snapshot/.automation/README.md",
+      "role": "current_snapshot",
+      "sha256": "57cad9cdf0b33ce75d597f5a7252c8930691720723f98dd56621a917bb2c723a",
+      "source_path": ".automation/README.md"
+    },
+    {
+      "bytes": 3059,
+      "path": "snapshot/.automation/check-environment.ps1",
+      "role": "current_snapshot",
+      "sha256": "a4712e16ddf4e6b9208f83b78b94213c55bac29e8e3e519681b5ea96762f58f7",
+      "source_path": ".automation/check-environment.ps1"
+    },
+    {
+      "bytes": 18099,
+      "path": "snapshot/.automation/common.ps1",
+      "role": "current_snapshot",
+      "sha256": "4e515c9998f72e3457c60d28017072e437967492f72d25e4a6d1b805ed35b63c",
+      "source_path": ".automation/common.ps1"
+    },
+    {
+      "bytes": 670,
+      "path": "snapshot/.automation/config.json",
+      "role": "current_snapshot",
+      "sha256": "aa3f5b968510372aa882772f1049b0047041892320a91a8f41f676d138c6fece",
+      "source_path": ".automation/config.json"
+    },
+    {
+      "bytes": 16041,
+      "path": "snapshot/.automation/controller.ps1",
+      "role": "current_snapshot",
+      "sha256": "42733eda449bc34af355fda3104412c5ca7bd27baad56aaa1192e43f60fd3d6b",
+      "source_path": ".automation/controller.ps1"
+    },
+    {
+      "bytes": 1468,
+      "path": "snapshot/.automation/fix.schema.json",
+      "role": "current_snapshot",
+      "sha256": "06d762d4abec5353ade11df180af6385232d30a8d327e2b402729099c6587628",
+      "source_path": ".automation/fix.schema.json"
+    },
+    {
+      "bytes": 3487,
+      "path": "snapshot/.automation/install-hooks.ps1",
+      "role": "current_snapshot",
+      "sha256": "5e7775698e600de6c3878745b82313787ea114eb7398c3ad6a81d6e9f5d16238",
+      "source_path": ".automation/install-hooks.ps1"
+    },
+    {
+      "bytes": 7626,
+      "path": "snapshot/.automation/invoke-codex.ps1",
+      "role": "current_snapshot",
+      "sha256": "0a429ba8a8a022c61baefb53def6bf0d45f063a99d77920e1da121c21382514b",
+      "source_path": ".automation/invoke-codex.ps1"
+    },
+    {
+      "bytes": 8519,
+      "path": "snapshot/.automation/invoke-gemini.ps1",
+      "role": "current_snapshot",
+      "sha256": "d929829ebcf28783c4f1a8f50cb3d814fa6d478a65b929468c96f80565852c09",
+      "source_path": ".automation/invoke-gemini.ps1"
+    },
+    {
+      "bytes": 605,
+      "path": "snapshot/.automation/orchestrator.ps1",
+      "role": "current_snapshot",
+      "sha256": "3d77e60ae8fc77d1f82277244de1922304219408240dd37e1af88e25e133755d",
+      "source_path": ".automation/orchestrator.ps1"
+    },
+    {
+      "bytes": 3363,
+      "path": "snapshot/.automation/review.schema.json",
+      "role": "current_snapshot",
+      "sha256": "15d3a36a561d5d89cd9748b60b47a0f65e6cadda6022f3bb38e89bd7c103f926",
+      "source_path": ".automation/review.schema.json"
+    },
+    {
+      "bytes": 304,
+      "path": "snapshot/.automation/reviewer-deny-tools.toml",
+      "role": "current_snapshot",
+      "sha256": "97310fe6edad9172f7553157c2d92db6b487c4f5bdb9ad509d7ff43c46f0bfd6",
+      "source_path": ".automation/reviewer-deny-tools.toml"
+    },
+    {
+      "bytes": 7958,
+      "path": "snapshot/.automation/tests/desktop-policy.tests.ps1",
+      "role": "current_snapshot",
+      "sha256": "0054f61c356da62bfc7746ec69b60129f1b1c5a1bfe34dfa24f14a645d736ff9",
+      "source_path": ".automation/tests/desktop-policy.tests.ps1"
+    },
+    {
+      "bytes": 25200,
+      "path": "snapshot/.automation/tests/run-tests.ps1",
+      "role": "current_snapshot",
+      "sha256": "00d258af39fb1824d788e49ad28badb626040e67e8c8ad8c25c79f59e54d161e",
+      "source_path": ".automation/tests/run-tests.ps1"
+    },
+    {
+      "bytes": 584,
+      "path": "snapshot/.githooks/post-commit",
+      "role": "current_snapshot",
+      "sha256": "34b2f6e27f78c3b6e5a44d953725a9491cbf74a4b566652ac0087ac061d433df",
+      "source_path": ".githooks/post-commit"
+    },
+    {
+      "bytes": 115,
+      "path": "snapshot/.gitignore",
+      "role": "current_snapshot",
+      "sha256": "ada39342a93e4681e34d41e837fe96f4515182bd08abb70ea73eef50bac3eab5",
+      "source_path": ".gitignore"
+    },
+    {
+      "bytes": 4683,
+      "path": "snapshot/AGENTS.md",
+      "role": "current_snapshot",
+      "sha256": "f3149f79943929b2834d47a70538dcd970e453a987571d118f8166a88d3486e6",
+      "source_path": "AGENTS.md"
+    },
+    {
+      "bytes": 10897,
+      "path": "snapshot/DESKTOP_WORKFLOW.md",
+      "role": "current_snapshot",
+      "sha256": "5c4720c8bc293af5760faefcd659c2c0e0ebe8adb084f35045f5b21cb6207ac9",
+      "source_path": "DESKTOP_WORKFLOW.md"
+    },
+    {
+      "bytes": 6654,
+      "path": "snapshot/GEMINI_REVIEW.md",
+      "role": "current_snapshot",
+      "sha256": "ac1311f32c3a7fe199663b801d705ab7a53e194afd065d73a9ca5e82cb615efb",
+      "source_path": "GEMINI_REVIEW.md"
+    },
+    {
+      "bytes": 1005,
+      "path": "snapshot/README.md",
+      "role": "current_snapshot",
+      "sha256": "935f031d8de6525a82fb8399a97e3a702638587591af016eef47484427b24cac",
+      "source_path": "README.md"
+    },
+    {
+      "bytes": 1905,
+      "path": "tests-r2.md",
+      "role": "developer_test_summary",
+      "sha256": "fbd6d8d7d37f2246531173b3b9e8d0129274e0103013633f1f40c3dcb92a53b4"
+    }
+  ],
+  "fix_attempts_consumed": 2,
+  "format": "desktop-handoff-manifest/v1",
+  "hash_mechanism": "Codex tool execution: CPython 3.10.11 hashlib.sha256 on Path.read_bytes; SHA256 values supplied by Codex, not Gemini attestation",
+  "package_id": "ef6a499a-58c7-420d-b1d9-e992dd8c78f2",
+  "review_target": {
+    "branch": "tu",
+    "chain_base_sha": "89fb280812aa0643edb9fc6f3fcbd8998b2cc7d1",
+    "commit_sha_is_anchor_only": true,
+    "kind": "saved_dirty_worktree_snapshot",
+    "parent_sha": null,
+    "reviewed_commit_sha": "89fb280812aa0643edb9fc6f3fcbd8998b2cc7d1",
+    "source_checkout": "F:\\MMRPG PNTT"
+  },
+  "round": "r2",
+  "self_reference_rule": "manifest.json, manifest.sha256 and handoff-r2.md are not payload entries; handoff references the manifest digest to avoid a circular hash.",
+  "session_id": "86870010-fde9-4e3f-b752-be674bf672c8"
+}

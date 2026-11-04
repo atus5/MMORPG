@@ -1,0 +1,7 @@
+# A user-tier deny in a fresh isolated home applies to every built-in and MCP tool.
+# The adapter refuses execution if system settings/policies could override this rule.
+[[rule]]
+toolName = "*"
+decision = "deny"
+priority = 999
+denyMessage = "Independent review is snapshot-only. All tools are disabled."

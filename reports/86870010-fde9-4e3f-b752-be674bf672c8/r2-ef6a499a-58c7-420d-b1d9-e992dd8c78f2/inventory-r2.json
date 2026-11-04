@@ -1,0 +1,389 @@
+{
+  "excluded_directory": {
+    ".git/": "Git internals and objects are not source payloads"
+  },
+  "excluded_files": [
+    {
+      "path": ".agents/state/fixture-tests.json",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    },
+    {
+      "path": ".agents/state/last-reviewed-commit.txt",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    },
+    {
+      "path": ".agents/state/live-probes.json",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    },
+    {
+      "path": ".agents/state/review-lock.json",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    },
+    {
+      "path": ".agents/state/review-status.json",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    },
+    {
+      "path": "agentReport.md",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    },
+    {
+      "path": "reports/.gitkeep",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    },
+    {
+      "path": "reports/2026-11-04-89fb280812aa0643edb9fc6f3fcbd8998b2cc7d1-baseline-r0.md",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    },
+    {
+      "path": "reports/2026-11-04-89fb280812aa0643edb9fc6f3fcbd8998b2cc7d1-controller-prep.md",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    },
+    {
+      "path": "reports/2026-11-04-89fb280812aa0643edb9fc6f3fcbd8998b2cc7d1-desktop-r1.md",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    },
+    {
+      "path": "supabase/.temp/cli-latest",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    },
+    {
+      "path": "supabase/.temp/gotrue-version",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    },
+    {
+      "path": "supabase/.temp/linked-project.json",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    },
+    {
+      "path": "supabase/.temp/pooler-url",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    },
+    {
+      "path": "supabase/.temp/postgres-version",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    },
+    {
+      "path": "supabase/.temp/project-ref",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    },
+    {
+      "path": "supabase/.temp/rest-version",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    },
+    {
+      "path": "supabase/.temp/storage-migration",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    },
+    {
+      "path": "supabase/.temp/storage-version",
+      "reason": "historical reports/state, generated outputs, or ignored CLI/cache files; contents not used as current source"
+    }
+  ],
+  "historical_report_exception": {
+    "included_as": "evidence/review-r1.md",
+    "path": "reports/2026-11-04-89fb280812aa0643edb9fc6f3fcbd8998b2cc7d1-desktop-r1.md"
+  },
+  "included_current_files": [
+    {
+      "bytes": 2358,
+      "complete_content": "snapshot/.agents/agents/gemini-reviewer.md",
+      "git_status": "untracked",
+      "path": ".agents/agents/gemini-reviewer.md"
+    },
+    {
+      "bytes": 2955,
+      "complete_content": "snapshot/.agents/skills/gemini-reviewer/SKILL.md",
+      "git_status": "untracked",
+      "path": ".agents/skills/gemini-reviewer/SKILL.md"
+    },
+    {
+      "bytes": 9801,
+      "complete_content": "snapshot/.automation/DESKTOP_CAPABILITIES.md",
+      "git_status": "untracked",
+      "path": ".automation/DESKTOP_CAPABILITIES.md"
+    },
+    {
+      "bytes": 342,
+      "complete_content": "snapshot/.automation/DESKTOP_ONLY",
+      "git_status": "untracked",
+      "path": ".automation/DESKTOP_ONLY"
+    },
+    {
+      "bytes": 15221,
+      "complete_content": "snapshot/.automation/README.md",
+      "git_status": "untracked",
+      "path": ".automation/README.md"
+    },
+    {
+      "bytes": 3059,
+      "complete_content": "snapshot/.automation/check-environment.ps1",
+      "git_status": "untracked",
+      "path": ".automation/check-environment.ps1"
+    },
+    {
+      "bytes": 18099,
+      "complete_content": "snapshot/.automation/common.ps1",
+      "git_status": "untracked",
+      "path": ".automation/common.ps1"
+    },
+    {
+      "bytes": 670,
+      "complete_content": "snapshot/.automation/config.json",
+      "git_status": "untracked",
+      "path": ".automation/config.json"
+    },
+    {
+      "bytes": 16041,
+      "complete_content": "snapshot/.automation/controller.ps1",
+      "git_status": "untracked",
+      "path": ".automation/controller.ps1"
+    },
+    {
+      "bytes": 1468,
+      "complete_content": "snapshot/.automation/fix.schema.json",
+      "git_status": "untracked",
+      "path": ".automation/fix.schema.json"
+    },
+    {
+      "bytes": 3487,
+      "complete_content": "snapshot/.automation/install-hooks.ps1",
+      "git_status": "untracked",
+      "path": ".automation/install-hooks.ps1"
+    },
+    {
+      "bytes": 7626,
+      "complete_content": "snapshot/.automation/invoke-codex.ps1",
+      "git_status": "untracked",
+      "path": ".automation/invoke-codex.ps1"
+    },
+    {
+      "bytes": 8519,
+      "complete_content": "snapshot/.automation/invoke-gemini.ps1",
+      "git_status": "untracked",
+      "path": ".automation/invoke-gemini.ps1"
+    },
+    {
+      "bytes": 605,
+      "complete_content": "snapshot/.automation/orchestrator.ps1",
+      "git_status": "untracked",
+      "path": ".automation/orchestrator.ps1"
+    },
+    {
+      "bytes": 3363,
+      "complete_content": "snapshot/.automation/review.schema.json",
+      "git_status": "untracked",
+      "path": ".automation/review.schema.json"
+    },
+    {
+      "bytes": 304,
+      "complete_content": "snapshot/.automation/reviewer-deny-tools.toml",
+      "git_status": "untracked",
+      "path": ".automation/reviewer-deny-tools.toml"
+    },
+    {
+      "bytes": 7958,
+      "complete_content": "snapshot/.automation/tests/desktop-policy.tests.ps1",
+      "git_status": "untracked",
+      "path": ".automation/tests/desktop-policy.tests.ps1"
+    },
+    {
+      "bytes": 25200,
+      "complete_content": "snapshot/.automation/tests/run-tests.ps1",
+      "git_status": "untracked",
+      "path": ".automation/tests/run-tests.ps1"
+    },
+    {
+      "bytes": 584,
+      "complete_content": "snapshot/.githooks/post-commit",
+      "git_status": "untracked",
+      "path": ".githooks/post-commit"
+    },
+    {
+      "bytes": 115,
+      "complete_content": "snapshot/.gitignore",
+      "git_status": "untracked",
+      "path": ".gitignore"
+    },
+    {
+      "bytes": 4683,
+      "complete_content": "snapshot/AGENTS.md",
+      "git_status": "untracked",
+      "path": "AGENTS.md"
+    },
+    {
+      "bytes": 10897,
+      "complete_content": "snapshot/DESKTOP_WORKFLOW.md",
+      "git_status": "untracked",
+      "path": "DESKTOP_WORKFLOW.md"
+    },
+    {
+      "bytes": 6654,
+      "complete_content": "snapshot/GEMINI_REVIEW.md",
+      "git_status": "untracked",
+      "path": "GEMINI_REVIEW.md"
+    },
+    {
+      "bytes": 1005,
+      "complete_content": "snapshot/README.md",
+      "git_status": "tracked",
+      "path": "README.md"
+    }
+  ],
+  "included_previous_files": [
+    {
+      "complete_content": "previous-r1/AGENTS.md",
+      "matches_digest_reported_by_r1": "704a7b8aa513981902a026af80cd776385941cad22df11acda946b788ddef755",
+      "path": "AGENTS.md"
+    },
+    {
+      "complete_content": "previous-r1/DESKTOP_WORKFLOW.md",
+      "matches_digest_reported_by_r1": "54c904a560fd141f39b3fb1621f6b122deeeaf20de727a8dadee48fa216a4854",
+      "path": "DESKTOP_WORKFLOW.md"
+    },
+    {
+      "complete_content": "previous-r1/GEMINI_REVIEW.md",
+      "matches_digest_reported_by_r1": "f21983e008df77fe4498b0c21c3b0980938a3128d0764e6e81409f570aaa181c",
+      "path": "GEMINI_REVIEW.md"
+    },
+    {
+      "complete_content": "previous-r1/README.md",
+      "matches_digest_reported_by_r1": "935f031d8de6525a82fb8399a97e3a702638587591af016eef47484427b24cac",
+      "path": "README.md"
+    },
+    {
+      "complete_content": "previous-r1/.gitignore",
+      "matches_digest_reported_by_r1": "ada39342a93e4681e34d41e837fe96f4515182bd08abb70ea73eef50bac3eab5",
+      "path": ".gitignore"
+    },
+    {
+      "complete_content": "previous-r1/.agents/agents/gemini-reviewer.md",
+      "matches_digest_reported_by_r1": "592564f0a8f640dc999f015443015d39ee18c780d2c89a9b6a2664337b38f8ed",
+      "path": ".agents/agents/gemini-reviewer.md"
+    },
+    {
+      "complete_content": "previous-r1/.agents/skills/gemini-reviewer/SKILL.md",
+      "matches_digest_reported_by_r1": "2ff25ef52b1164040c9288de9c8309de86cd2a1a9645f6a3999920af1a730cb3",
+      "path": ".agents/skills/gemini-reviewer/SKILL.md"
+    },
+    {
+      "complete_content": "previous-r1/.automation/DESKTOP_CAPABILITIES.md",
+      "matches_digest_reported_by_r1": "1d38faded907cb4486d1aebfba895a1b08a145e966ff2a56789567aa631478e0",
+      "path": ".automation/DESKTOP_CAPABILITIES.md"
+    },
+    {
+      "complete_content": "previous-r1/.automation/DESKTOP_ONLY",
+      "matches_digest_reported_by_r1": "920ef2baa7c409319f01b929be7c9ab106d2bd9fb1de99f62fc550091d73a0ab",
+      "path": ".automation/DESKTOP_ONLY"
+    },
+    {
+      "complete_content": "previous-r1/.automation/README.md",
+      "matches_digest_reported_by_r1": "aad9d7556f66dbec06d34341f852b580af05d485a9ee842c277c4aa749119238",
+      "path": ".automation/README.md"
+    },
+    {
+      "complete_content": "previous-r1/.automation/check-environment.ps1",
+      "matches_digest_reported_by_r1": "a4712e16ddf4e6b9208f83b78b94213c55bac29e8e3e519681b5ea96762f58f7",
+      "path": ".automation/check-environment.ps1"
+    },
+    {
+      "complete_content": "previous-r1/.automation/common.ps1",
+      "matches_digest_reported_by_r1": "53e27e6faf62737614377c41d066a849b310065a37060392b2b625d9f47c8415",
+      "path": ".automation/common.ps1"
+    },
+    {
+      "complete_content": "previous-r1/.automation/config.json",
+      "matches_digest_reported_by_r1": "aa3f5b968510372aa882772f1049b0047041892320a91a8f41f676d138c6fece",
+      "path": ".automation/config.json"
+    },
+    {
+      "complete_content": "previous-r1/.automation/controller.ps1",
+      "matches_digest_reported_by_r1": "42733eda449bc34af355fda3104412c5ca7bd27baad56aaa1192e43f60fd3d6b",
+      "path": ".automation/controller.ps1"
+    },
+    {
+      "complete_content": "previous-r1/.automation/fix.schema.json",
+      "matches_digest_reported_by_r1": "06d762d4abec5353ade11df180af6385232d30a8d327e2b402729099c6587628",
+      "path": ".automation/fix.schema.json"
+    },
+    {
+      "complete_content": "previous-r1/.automation/install-hooks.ps1",
+      "matches_digest_reported_by_r1": "5e7775698e600de6c3878745b82313787ea114eb7398c3ad6a81d6e9f5d16238",
+      "path": ".automation/install-hooks.ps1"
+    },
+    {
+      "complete_content": "previous-r1/.automation/invoke-codex.ps1",
+      "matches_digest_reported_by_r1": "0a429ba8a8a022c61baefb53def6bf0d45f063a99d77920e1da121c21382514b",
+      "path": ".automation/invoke-codex.ps1"
+    },
+    {
+      "complete_content": "previous-r1/.automation/invoke-gemini.ps1",
+      "matches_digest_reported_by_r1": "d929829ebcf28783c4f1a8f50cb3d814fa6d478a65b929468c96f80565852c09",
+      "path": ".automation/invoke-gemini.ps1"
+    },
+    {
+      "complete_content": "previous-r1/.automation/orchestrator.ps1",
+      "matches_digest_reported_by_r1": "3d77e60ae8fc77d1f82277244de1922304219408240dd37e1af88e25e133755d",
+      "path": ".automation/orchestrator.ps1"
+    },
+    {
+      "complete_content": "previous-r1/.automation/review.schema.json",
+      "matches_digest_reported_by_r1": "15d3a36a561d5d89cd9748b60b47a0f65e6cadda6022f3bb38e89bd7c103f926",
+      "path": ".automation/review.schema.json"
+    },
+    {
+      "complete_content": "previous-r1/.automation/reviewer-deny-tools.toml",
+      "matches_digest_reported_by_r1": "97310fe6edad9172f7553157c2d92db6b487c4f5bdb9ad509d7ff43c46f0bfd6",
+      "path": ".automation/reviewer-deny-tools.toml"
+    },
+    {
+      "complete_content": "previous-r1/.automation/tests/desktop-policy.tests.ps1",
+      "matches_digest_reported_by_r1": "f3a812c696d975ee277f5991c1195964164af78e59ad2f04f7f138c86ebc0b9d",
+      "path": ".automation/tests/desktop-policy.tests.ps1"
+    },
+    {
+      "complete_content": "previous-r1/.automation/tests/run-tests.ps1",
+      "matches_digest_reported_by_r1": "ae0258be73c872c56d36588d4ba472ef3120176447f5b56d667904cb0c17a371",
+      "path": ".automation/tests/run-tests.ps1"
+    },
+    {
+      "complete_content": "previous-r1/.githooks/post-commit",
+      "matches_digest_reported_by_r1": "34b2f6e27f78c3b6e5a44d953725a9491cbf74a4b566652ac0087ac061d433df",
+      "path": ".githooks/post-commit"
+    }
+  ],
+  "payloads_added_after_status_capture": "This new package only; it is not part of the source inventory.",
+  "source_enumeration": "git ls-files plus git ls-files --others --exclude-standard; reports/state/cache/secrets excluded",
+  "status_captured_before_creating_this_package": [
+    " M README.md",
+    "?? .agents/agents/gemini-reviewer.md",
+    "?? .agents/skills/gemini-reviewer/SKILL.md",
+    "?? .automation/DESKTOP_CAPABILITIES.md",
+    "?? .automation/DESKTOP_ONLY",
+    "?? .automation/README.md",
+    "?? .automation/check-environment.ps1",
+    "?? .automation/common.ps1",
+    "?? .automation/config.json",
+    "?? .automation/controller.ps1",
+    "?? .automation/fix.schema.json",
+    "?? .automation/install-hooks.ps1",
+    "?? .automation/invoke-codex.ps1",
+    "?? .automation/invoke-gemini.ps1",
+    "?? .automation/orchestrator.ps1",
+    "?? .automation/review.schema.json",
+    "?? .automation/reviewer-deny-tools.toml",
+    "?? .automation/tests/desktop-policy.tests.ps1",
+    "?? .automation/tests/run-tests.ps1",
+    "?? .githooks/post-commit",
+    "?? .gitignore",
+    "?? AGENTS.md",
+    "?? DESKTOP_WORKFLOW.md",
+    "?? GEMINI_REVIEW.md",
+    "?? agentReport.md",
+    "?? reports/.gitkeep",
+    "?? reports/2026-11-04-89fb280812aa0643edb9fc6f3fcbd8998b2cc7d1-baseline-r0.md",
+    "?? reports/2026-11-04-89fb280812aa0643edb9fc6f3fcbd8998b2cc7d1-controller-prep.md",
+    "?? reports/2026-11-04-89fb280812aa0643edb9fc6f3fcbd8998b2cc7d1-desktop-r1.md",
+    ""
+  ]
+}

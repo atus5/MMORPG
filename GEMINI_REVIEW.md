@@ -1,0 +1,33 @@
+# Independent review contract
+
+## Active: Antigravity Desktop
+
+Read the user-selected immutable handoff package and its supplied `AGENTS.md`, `DESKTOP_WORKFLOW.md`, source files and evidence. Use exactly Gemini 4 Argon in Antigravity. The user observes the selected model in the app; record this as UI evidence, not API attestation or a claim that an external integration exists. Stop for missing/wrong model or incomplete context. Do not use any CLI AI client or reuse Desktop authentication elsewhere.
+
+The package identifies checkout/branch `tu`, session/package UUID, round, original base, reviewed_commit_sha/HEAD anchor, parent and dirty status. It includes a tracked diff, full byte-preserved relevant tracked AND untracked file contents under `snapshot/`, previous snapshots/deleted-file evidence where applicable, test results and an included/excluded inventory. Ordinary Git diff does not contain untracked contents. Review these saved inputs against the same base each round; do not replace them with changing live workspace files. HEAD is an anchor and does not claim to contain dirty/untracked source. Missing or truncated payloads are BLOCKED until supplied fully.
+
+Codex supplies SHA256 values computed by a named local checksum mechanism on original bytes, plus a separate digest of the manifest. In the report distinguish `hashes_supplied_by_codex`, `hashes_independently_verified` (exact supported tool, byte inputs and actual results), and `not_independently_verified` (which hashes and why). Reading text or repeating supplied digests is not independent cryptographic verification. No supported read-only Antigravity checksum tool has been verified for this workflow; if none is available, explicitly record NOT_INDEPENDENTLY_VERIFIED and review the supplied snapshot contents without running commands. This disclosed limitation alone does not prevent a content review; missing context/tests still blocks approval. Codex/Owner rechecks package checksums and correspondence with live source before using the result.
+
+Only write `agentReport.md` and `reports/`. Never edit source, tests, migrations, config, rules, `.agents/state/` or Git, and never commit, push, switch branches, merge or deploy. Use file-reading tools and the prepared diff; do not run terminal commands, MCP tools, browser actions or external integrations during this review. If your file writer needs shell execution or the Desktop cannot enforce the agreed write approvals, stop direct workspace access; offer review text for the user to save from a sanitized read-only snapshot.
+
+Write history first to the exact unused handoff path: `reports/YYYY-MM-DD-<HEAD>-<session-UUID>-<package-UUID>-r<round>.md`. Set `overwrite=false` / `Overwrite: false` when supported. If exclusive creation is unavailable, return text for Owner to save with create-new instead of risking an overwrite; a pre-existence check alone is not atomic. Never overwrite history or a sealed package. Only after history exists, update `agentReport.md` intentionally with the same completed content, preserving an older meaningful latest report in history first. r0 is initial; r1..r3 are at most three fixes in the same session. No counter reset across chats.
+
+Preserve the report structure: provenance DESKTOP_MANUAL; session/package and round/fix count; checkout/branch; HEAD/parent anchors; base; supplied manifest identity and separate hash-verification status/evidence; UI-observed model/evidence; time with offset; snapshot files actually read; Required Actions; Optional Improvements; reviewer test observations; supplied developer test evidence; finding dispositions; verdict; final status. Do not claim tests you did not execute. Missing prerequisites are BLOCKED/NOT_EVALUATED in Markdown, never a fabricated schema-valid PASS.
+
+Keep all finding fields described below. Desktop reports use Markdown, retaining the finding structure from `.automation/review.schema.json`. That unchanged JSON schema describes committed CLI snapshots and cannot express a dirty snapshot identity: do not add unsupported top-level fields, fabricate a SHA or label dirty content as a reviewed commit. A complete Desktop review may conclude PASS only with no Required Actions and successful applicable test evidence for the exact reviewed snapshot; Owner still approves merging manually.
+
+## Shared review criteria
+
+Assess Next.js, Phaser 3, FastAPI, Supabase schema/migrations, RLS, authentication, API, WebSocket, multiplayer, heartbeat, Diem Co Duyen, AFK, thien kiep, PvP, transactions, concurrency, security, performance, tests and regressions where code exists. Do not invent an implementation or missing product requirements. Cloud database access is not part of an automatic review: only supplied SQL and metadata can be reviewed.
+
+Each finding needs a stable ID, severity (CRITICAL/HIGH/MEDIUM/LOW), numeric confidence (0..1), category, existing file path, positive line number, description, concrete evidence, impact, recommended_fix and nonempty verification_steps. Use action REQUIRED or OPTIONAL and confirmed true/false. Give reproducible evidence; do not raise severity without evidence. Confirmed CRITICAL/HIGH findings must be REQUIRED. CONFIRMED MEDIUM defects should be REQUIRED; stylistic suggestions are OPTIONAL.
+
+Use CHANGES_REQUIRED if any REQUIRED finding remains, otherwise PASS. PASS with a confirmed CRITICAL/HIGH finding is invalid. Test results describe what you can establish from supplied evidence; you cannot execute tests. Do not claim tests passed because test files exist.
+
+On subsequent rounds recheck all unresolved findings against the cumulative change, including regressions introduced by fixes. A developer's rejection is evidence to assess, not permission to ignore a valid finding. Product Owner approval is necessary to accept an unresolved confirmed HIGH or CRITICAL defect.
+
+## Preserved legacy CLI contract - inactive
+
+The previous engine received immutable committed snapshots through stdin: the controller supplied instructions, cumulative diff and tracked text; every tool was denied. It returned only JSON matching `.automation/review.schema.json` with exact commit_sha/parent_sha and inspected files_reviewed. Model identity came from CLI usage metadata. Only the controller wrote reports/state, and Codex returned structured edits validated against `.automation/fix.schema.json`.
+
+Those contracts, JSON schemas, CLI policy and tests remain available for historical reference and isolated fixtures. They are not the Desktop execution/report-writing rules. No CLI invocation, probe, authentication or hook activation is permitted in the current workflow.

@@ -1,0 +1,4 @@
+Active workflow: Codex Desktop on Windows + Antigravity Desktop / Gemini 4 Argon.
+Live CLI adapters, CLI probes/authentication and CLI hook activation are disabled.
+Do not remove this policy marker or reuse old receipts to enable the legacy engine.
+See ../DESKTOP_WORKFLOW.md. No automatic invocation, fix, commit, push, merge or deployment.

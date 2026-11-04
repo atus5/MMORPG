@@ -1,0 +1,5 @@
+* text=auto eol=lf
+/reports/** -text
+/agentReport.md -text
+/.automation/fix.schema.json -text
+/.automation/review.schema.json -text
