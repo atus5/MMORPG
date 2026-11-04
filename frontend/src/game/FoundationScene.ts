@@ -4,6 +4,7 @@ import type { Direction } from "../network/protocol";
 
 export class FoundationScene extends Phaser.Scene {
   private player!: Phaser.GameObjects.Container;
+  private playerRing?: Phaser.GameObjects.Graphics;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private lastSent = 0;
   private lastDirection: Direction = "idle";
@@ -55,6 +56,7 @@ export class FoundationScene extends Phaser.Scene {
 
   private renderState() {
     const snapshot = this.client.getSnapshot();
+    if (snapshot.status !== "connected") this.lastDirection = "idle";
     if (snapshot.welcome && !this.worldReady) {
       this.worldReady = true;
       const { width, height } = snapshot.welcome.world;
@@ -67,8 +69,10 @@ export class FoundationScene extends Phaser.Scene {
       g.fillStyle(0x1b5557).fillEllipse(width * 0.25, height * 0.55, 350, 720);
       g.lineStyle(3, 0x78a99c, 0.3).strokeEllipse(width * 0.25, height * 0.55, 350, 720);
       g.fillStyle(0x284c3c).fillEllipse(width * 0.7, height * 0.4, 600, 450);
-      g.lineStyle(4, 0xd8cb9d, 0.4).strokeCircle(width / 2, height / 2, 100);
-      g.lineStyle(1, 0xd8cb9d, 0.24).strokeCircle(width / 2, height / 2, 115);
+      // Keep the existing ring geometry, but own its visibility separately from the world.
+      this.playerRing = this.add.graphics().setDepth(-10);
+      this.playerRing.lineStyle(4, 0xd8cb9d, 0.4).strokeCircle(width / 2, height / 2, 100);
+      this.playerRing.lineStyle(1, 0xd8cb9d, 0.24).strokeCircle(width / 2, height / 2, 115);
       for (let n = 0; n < 36; n++) {
         const x = 100 + ((n * 239) % (width - 200));
         const y = 70 + ((n * 173) % (height - 140));
@@ -88,6 +92,8 @@ export class FoundationScene extends Phaser.Scene {
     }
     // Position is rendered only from validated server messages. No client movement integration.
     if (snapshot.player) this.player.setPosition(snapshot.player.x, snapshot.player.y).setVisible(true);
+    else this.player.setVisible(false);
+    this.playerRing?.setVisible(snapshot.player !== null);
     this.player.setAlpha(snapshot.status === "connected" ? 1 : 0.4);
   }
 

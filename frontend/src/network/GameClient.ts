@@ -140,6 +140,6 @@ export class GameClient {
       socket.onopen = socket.onmessage = socket.onerror = socket.onclose = null;
       socket.close();
     }
-    this.publish({ status: "disconnected" });
+    this.publish({ status: "disconnected", welcome: null, player: null, tick: 0, ack: 0 });
   }
 }

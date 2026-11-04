@@ -94,4 +94,31 @@ describe("GameClient lifecycle and authority", () => {
     expect(client.getSnapshot().status).toBe("error");
     expect(vi.getTimerCount()).toBe(0);
   });
+
+  it.each(["error", "close", "timeout"] as const)(
+    "clears the previous session when reconnect fails via %s",
+    (failure) => {
+      vi.useFakeTimers();
+      const { client, sockets } = setup();
+      sockets[0].receive(welcome);
+      sockets[0].receive({ type: "state", tick: 1, ack: 0, player: { x: 860, y: 500 } });
+      sockets[0].close();
+      expect(client.getSnapshot()).toMatchObject({
+        status: "disconnected",
+        player: null,
+        welcome: null,
+        tick: 0,
+        ack: 0,
+      });
+      client.connect();
+      expect(client.getSnapshot()).toMatchObject({ status: "connecting", player: null, welcome: null });
+      if (failure === "error") sockets[1].onerror?.();
+      else if (failure === "close") sockets[1].close();
+      else vi.advanceTimersByTime(6000);
+      expect(client.getSnapshot().status).toBe(failure === "close" ? "disconnected" : "error");
+      expect(client.getSnapshot().player).toBeNull();
+      expect(client.getSnapshot().welcome).toBeNull();
+      expect(vi.getTimerCount()).toBe(0);
+    },
+  );
 });
