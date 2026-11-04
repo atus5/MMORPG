@@ -1,0 +1,300 @@
+# M2 — World & Player System architecture
+
+Status: **PROPOSED / DESIGN ONLY**. M1 is [accepted PASS](M1_ACCEPTANCE.md). No M2 code, schema, Redis service or migration exists as a result of this document. Implementation gate: **CLOSED until independent Gemini architecture review and Owner approval**.
+
+All ADRs are proposals. Owner-confirmed world/progression facts are preserved verbatim in meaning in [game rules reference](GAME_RULES_REFERENCE.md); missing policies remain **Product Owner Decision Pending**. A technical recommendation below is not a configured game rule. Owner has decided: **M2 identity interfaces only; no real Auth integration**.
+
+## 1. Scope and invariants
+
+M2 designs durable identity/character ownership, shared world membership, server-selected spawning, authoritative movement, nearby-player synchronization, recoverable sessions and the seams for multiple processes. Combat, rewards, AFK income, cultivation progression, death, resurrection, PvP rules and tribulation are outside this scope.
+
+Required invariants:
+
+1. Account ID, Player ID and Character ID are distinct. An account can own multiple characters; no count limit is hardcoded. Ownership requires a trusted identity context, supplied only by explicit local test adapters in the proposed M2 scope, not a browser assertion.
+2. At most one current control grant and one simulation authority exist for a character. Every accepted input and persisted checkpoint is bound to current authority generations.
+3. Nhân Giới, Linh Giới and Tiên Giới are three shared logical worlds. Players in the same world and area share state; there is no M1-style private world per socket.
+4. Partitioning is an infrastructure detail inside a logical world, not permission to create alternate copies/channels of that world. Visibility is an area-of-interest (AOI) projection, not a new world.
+5. Client sends intent, never authoritative position, speed, elapsed simulation time, world membership or progression.
+6. PostgreSQL holds durable state and fenced ownership. Redis holds disposable coordination/cache data; loss of a Redis key cannot confer authority or erase a character.
+7. Reconnect does not grant a new random spawn or replay old movement. A new transport is not a new character.
+8. Unspecified gameplay policy fails with a configuration/policy-not-ready result; no fallback starting world, realm, coordinate, protection period or reward rate is invented.
+
+## 2. System architecture diagram
+
+```mermaid
+flowchart LR
+  Browser["Next.js UI + Phaser client"]
+  Auth["Future provider adapter: deferred beyond M2"]
+  TestIdentity["Explicit local test identity adapter"]
+  Gateway["FastAPI API and WebSocket gateway"]
+  Admission["Identity, ownership and admission"]
+  subgraph Runtime["World runtime: one owner per partition"]
+    Nhan["Nhan Gioi: shared logical world"]
+    Linh["Linh Gioi: shared logical world"]
+    Tien["Tien Gioi: shared logical world"]
+  end
+  DB[("PostgreSQL: characters, checkpoints, fenced grants")]
+  Cache[("Redis: tickets, presence, routing and render hints")]
+  Outbox["Metadata outbox relay"]
+  Browser <-->|"HTTPS / WSS"| Gateway
+  Gateway --> Admission
+  Admission -.->|"interface only in M2"| Auth
+  TestIdentity -->|"local trusted test context only"| Admission
+  Admission <-->|"ownership and grant transaction"| DB
+  Gateway <-->|"bounded intent queue / state"| Runtime
+  Runtime <-->|"leases and checkpoint transactions"| DB
+  Gateway <--> Cache
+  Runtime -->|"ephemeral presence / state"| Cache
+  DB --> Outbox
+  Outbox -->|"idempotent metadata notifications"| Cache
+```
+
+Initial implementation recommendation: a modular monolith with gateways and serialized world actors in one backend process, one initial partition per enabled world. This limits operational complexity while separating responsibilities in code. Multi-gateway/owner processes use the same contracts later; merely starting several Uvicorn workers must not create duplicate simulations. Exact deployment topology and capacity are review decisions, not implemented features. See [ADR-0002](adr/0002-shared-world-authority.md).
+
+## 3. Component responsibilities and data flow
+
+- **Next.js UI:** account/character selection, connection state and user actions. No service-role key, gameplay rules or authoritative position calculation.
+- **Phaser renderer/input adapter:** encode allowed directional intent, render server snapshots and optional visual interpolation. Interpolation cannot feed positions back into authoritative state. Prediction/reconciliation is an optional later optimization, not required to fix F-002.
+- **Identity/admission module:** define a trusted identity-provider interface; resolve separate account/player/character identities; authorize ownership; design ticket admission and control grants. M2 tests use an explicit local adapter. Real token verification/login is deferred, not replaced by trusting client IDs.
+- **WebSocket gateway:** bounded unauthenticated handshake, authenticated binding, schema/sequence/rate checks, route inputs to the owner, per-recipient AOI output, backpressure and cleanup. Gateway processes are not simulation owners by virtue of accepting a socket.
+- **World directory/runtime:** route `(world, map_revision, partition)` to the verified owner; one serialized actor integrates that partition. It owns player membership, input queues, spatial index and tick state.
+- **Persistence module:** fenced grants, bounded checkpoint transactions, versioned map metadata, idempotent operations and transactional metadata outbox. No transaction per rendered frame.
+- **Redis adapters:** disposable presence/indexes, one-use ticket cache, routing hints, bounded latest-state cache and optional cross-process render fan-out. They never decide who owns a character.
+- **Outbox relay/operations:** retry metadata delivery by event ID; detect stale owners, overload, failed checkpoints, gaps and recovery. No rewards or economy processors in M2.
+
+Input path: socket → authenticated character/control generation → owner lookup → owner-clock timestamp and bounded queue → simulation integration → spatial/AOI projection → gateway → client. Durable path: authoritative state → checkpoint transaction with lease/grant validation → durable checkpoint version. UI state ACK and durable checkpoint ACK have different meanings.
+
+## 4. Identity and character model
+
+Proposed ID semantics, subject to architecture review:
+
+- `account_id`: stable application account ID. Future `(provider, issuer, subject)` identity links map to it; it is not a provider token or socket ID.
+- `player_id`: stable game-domain profile ID, proposed one profile per account. It survives reconnect and character selection. This technical profile cardinality is a proposal, not an approved character-count rule.
+- `character_id`: stable persistent avatar ID owned through that account's player profile. One account can own many characters. No unique constraint on `character.player_id`, hardcoded cap, implied unlimited-creation permission or default quota is allowed. Missing creation policy denies creation with `POLICY_NOT_READY`.
+- `session_id`, `connection_id`, control generation and owner instance ID are transport/runtime identifiers; none substitutes for the three domain IDs. Public entity IDs expose only approved render identity, never account identity.
+
+Owner decision PO-01 is resolved: **design the identity interface only; do not implement Supabase Auth in M2**. `IdentityProvider` returns a trusted principal or an error; selection checks the entire Account → Player → Character ownership chain. M2's eventual local test adapter is explicitly enabled on loopback/test environments, cannot be selected by a client message and cannot become an Internet/production fallback. Absence of a real provider means real-user admission is unavailable. No login UI, real token verification, OAuth or credential reuse is authorized.
+
+Future provider-adapter requirements are recorded, not M2 acceptance claims: validate signature, issuer, audience, expiry, algorithms and key rotation with supported tooling; never accept a decoded-only JWT. Project signing mode and actual schema have not been inspected. [Supabase JWT documentation](https://supabase.com/docs/guides/auth/jwts). See [ADR-0001](adr/0001-identity-and-session-admission.md).
+
+Character data in M2: stable identity/owner, approved display metadata, durable world/map/position checkpoint and technical versions. Do not create HP, damage, currency, cultivation realm or progression defaults. A world is not a cultivation realm.
+
+## 5. Three-world membership and spawning
+
+Logical world IDs are proposed stable technical identifiers for the confirmed display names: `nhan_gioi`, `linh_gioi`, `tien_gioi`. Enabled maps, dimensions, coordinate units, collision masks, spawn regions and entry/transition rules require approved versioned configuration. The names alone imply neither a starting world nor an automatic progression order.
+
+**World Membership** is durable placement: `membership_id`, character, world/map/partition, membership version and lifecycle status. Its repository enforces at most one active membership per character; it is separate from socket presence, player profile, cultivation realm and control grant. Losing Redis presence does not end membership.
+
+**World Transition** is a separate orchestration/policy abstraction: `requestTransition` → evaluate a versioned `WorldTransitionPolicy` against trusted state → reserve target authority → fenced/idempotent transaction updating membership and checkpoint → publish metadata outbox → fresh target snapshot. The source freezes input during handoff; target cannot expose the character before the commit. Failure before commit retains source membership; uncertain commit is resolved by operation ID, never guessed rollback or duplicate spawn. Canonical lock order and cross-owner handoff require tests before enabling this path.
+
+There is no free-transfer endpoint or default allow policy. Missing policy produces `POLICY_NOT_READY`. Approved ascension thresholds are **1,000,000 Nhân Giới → Linh Giới** and **10,000,000 Linh Giới → Tiên Giới**; preserve them from the [reference](GAME_RULES_REFERENCE.md), but reaching a threshold alone does not resolve costs, reset semantics, reverse travel or transition eligibility. These remain **Product Owner Decision Pending**. M2 proposes abstractions, not progression/transition gameplay implementation. A partition handoff within one world is a technical operation, not a bypass around world-transition policy.
+
+First spawn flow:
+
+1. Verify account/character and an idempotent spawn request. Determine the allowed world only from an approved policy/configuration.
+2. The authoritative actor samples a candidate from approved navigable spawn geometry using server randomness. Area-weighted geometry avoids accidental polygon-size bias; collision/separation/safe-zone rules apply only when supplied by Owner.
+3. Sampling has a bounded attempt budget. No valid candidate means `SPAWN_UNAVAILABLE`; missing policy means `POLICY_NOT_READY`, never `(0,0)` or an arbitrary world.
+4. Commit the selected world/map/position once under the character grant and operation key before announcing a visible spawned entity. Retrying the same operation returns the committed result, not another random roll.
+5. Crash after commit/before welcome recovers that same result. Ordinary reconnect restores current owner memory or the last durable checkpoint; it does not reroll spawn.
+
+If a saved position is incompatible with a new map revision, return an explicit recovery/configuration error. A migration/relocation policy must be separately approved; do not silently teleport or respawn.
+
+## 6. Movement model and F-002
+
+Recommendation: **fixed simulation steps + bounded ordered input-event queue + piecewise server-time integration**, detailed in [ADR-0003](adr/0003-movement-time-and-input-queue.md).
+
+All valid direction transitions are retained until their simulation interval is consumed. The owning actor stamps receipt using its own monotonic clock. A client timestamp may support diagnostics/validation but cannot backdate input, decide duration or increase distance. Do not use unsynchronized gateway clocks for integration.
+
+Within a fixed interval, integrate the old direction until each accepted transition time, then the new direction; split again at input-lease expiry. Sequence/timestamp ties have deterministic ordering. The tick still advances once per fixed interval; publication can run at a different rate.
+
+F-002 reference case, using M1's demonstration values only: idle at `t=0`, right accepted at `0.01s`, idle accepted at `0.04s`, publish at `0.05s`. Proposed M2 displacement is `V × 0.03s` (4.8px only if a test fixture explicitly supplies M1's 160px/s). Raising tick rate alone does not preserve that lost press/release edge.
+
+Simulation frequency, publishing frequency, input lease, movement speed/units and catch-up budgets are not selected production values here. M1's 20Hz / 50ms / 8px observation is evidence of the old behavior, not an approved M2 balance specification. M1 source is unchanged.
+
+Lag policy: process only bounded catch-up work, preserve security/lease deadlines in real monotonic time, and freeze/resynchronize rather than applying one huge delta or granting compensatory travel. Queue overflow must not silently discard a stop event; reject/freeze/resync according to an approved overload contract.
+
+## 7. WebSocket message flow
+
+Proposed protocol v2 is a new contract, not an unannounced mutation of M1 v1. Admission obtains an opaque, origin-bound, single-use ticket after the identity interface supplies a trusted principal. In M2 this is a local test flow only; actual JWT verification/real-user admission is deferred. WSS accepts only an admission message until validation completes; credentials are absent from URL/query/logs. The future deployed transport must follow [OWASP WebSocket security guidance](https://cheatsheetseries.owasp.org/cheatsheets/WebSocket_Security_Cheat_Sheet.html).
+
+```mermaid
+sequenceDiagram
+  participant C as Browser
+  participant G as API and WS gateway
+  participant R as Redis
+  participant W as World owner
+  participant P as PostgreSQL
+  Note over C,G: M2 local test identity context only, real Auth deferred
+  C->>G: Ticket request with selected character, trusted adapter context required
+  G->>P: Check Account, Player and Character ownership chain
+  G->>R: Store ticket digest with expiry and origin binding
+  G-->>C: Opaque one-use ticket
+  C->>G: WSS open, authenticate ticket as first message
+  G->>R: Atomically consume ticket record
+  G->>W: Admit verified subject and ticket ID
+  W->>P: Redeem ticket ID once, validate owner lease, claim control generation
+  P-->>W: Current grant and durable position
+  W-->>G: Authoritative welcome and full AOI snapshot
+  G-->>C: Welcome, session generation, baseline and applied ACK
+  C->>G: Sequenced directional input intent
+  G->>W: Route verified binding, not client-supplied identity
+  W->>W: Stamp owner time, queue and integrate fixed interval
+  W-->>G: Versioned AOI state
+  G-->>C: Snapshot or baseline-bound delta
+  W->>P: Fenced checkpoint transaction
+  P-->>W: Durable checkpoint version
+```
+
+Message families, all proposed: `authenticate`, `welcome`, `input`, `state`, `snapshot`, `resync_request`, `ping`, `pong`, `reauth_required`, `error`. The exact JSON schema is a later implementation deliverable after review, not executable code in this design.
+
+- Socket binding carries trusted account/player/character/session internally. Input contains a strictly increasing sequence, direction, current control generation and optional diagnostic client time; additional authority fields are rejected.
+- `ack_received_seq` means admission to the bounded owner queue; `ack_applied_seq` means included in simulation. Neither is a durability claim. `checkpoint_version` identifies a completed database checkpoint.
+- State includes world/map revision, owner epoch, tick, stream sequence, baseline ID and public entity IDs/state. Account IDs/tokens/private character data are excluded from nearby-player messages.
+- Reliable WebSocket ordering does not repair missed cross-node Pub/Sub updates. A source sequence gap, new subscription, baseline mismatch or ownership change requires a full resync before applying deltas.
+- Bounded outbound queues may coalesce obsolete full render states, but cannot drop lifecycle/control messages unnoticed. Inbound movement transitions are not coalesced to the last direction. See [ADR-0006](adr/0006-sync-and-recovery.md).
+
+## 8. Database entity design
+
+Conceptual model only. Physical schema/table names, existing objects, RLS and server versions remain unverified; inspect a local/non-production target and obtain approval before any DDL. Do not overwrite service schemas or existing `public.rls_auto_enable()` / `ensure_rls`.
+
+```mermaid
+erDiagram
+  GAME_ACCOUNT ||--o{ IDENTITY_LINK : future_provider_mapping
+  GAME_ACCOUNT ||--|| PLAYER_PROFILE : has_proposed_profile
+  PLAYER_PROFILE ||--o{ CHARACTER : owns
+  WORLD ||--o{ MAP_REVISION : versions
+  MAP_REVISION ||--o{ PARTITION : divides
+  PARTITION ||--|| OWNER_LEASE : fences
+  CHARACTER ||--|| CHARACTER_POSITION : checkpoints
+  CHARACTER ||--o{ WORLD_MEMBERSHIP : placement_history
+  WORLD ||--o{ WORLD_MEMBERSHIP : contains
+  WORLD_MEMBERSHIP ||--o{ TRANSITION_RESULT : records_approved_changes
+  CHARACTER ||--o| CONTROL_GRANT : controls
+  PARTITION ||--o{ CONTROL_GRANT : hosts
+  MAP_REVISION ||--o{ CHARACTER_POSITION : locates
+  GAME_ACCOUNT ||--o{ REQUEST_RESULT : deduplicates
+  CHARACTER ||--o{ TICKET_REDEMPTION : admits
+  CHARACTER ||--o{ OUTBOX_EVENT : emits_metadata
+  CHARACTER {
+    uuid character_id PK
+    uuid player_id FK
+    string display_name
+    bigint metadata_version
+  }
+  GAME_ACCOUNT {
+    uuid account_id PK
+  }
+  PLAYER_PROFILE {
+    uuid player_id PK
+    uuid account_id FK
+  }
+  WORLD_MEMBERSHIP {
+    uuid membership_id PK
+    uuid character_id FK
+    string world_id FK
+    bigint membership_version
+    string status
+  }
+  CHARACTER_POSITION {
+    uuid character_id PK
+    string world_id FK
+    string map_revision FK
+    string partition_id FK
+    decimal x
+    decimal y
+    bigint checkpoint_version
+    bigint control_generation
+    bigint owner_epoch
+  }
+  CONTROL_GRANT {
+    uuid character_id PK
+    uuid session_id
+    bigint control_generation
+    string partition_id FK
+    bigint owner_epoch
+  }
+  OWNER_LEASE {
+    string partition_id PK
+    uuid owner_instance_id
+    bigint owner_epoch
+    timestamp lease_until
+  }
+```
+
+The diagram abbreviates keys. Partition identity is composite `(world_id, map_revision, partition_id)`; a map revision belongs to one world. Position/grant/lease references use complete composite identities, not globally unique partition names assumed by the drawing.
+
+- `GAME_ACCOUNT`, `PLAYER_PROFILE`: separate stable Account ID and Player ID. Proposed unique account/profile link is a technical design recommendation. `IDENTITY_LINK` is a future provider mapping, not a M2 Auth implementation or permission to modify service-owned Auth tables.
+- `CHARACTER`: independent Character ID and player owner FK; the account owns many through its profile. Naming/account limits need policy. Creation locks the account policy/quota record if a cap is approved; no cap value or single-character uniqueness is introduced.
+- `WORLD_MEMBERSHIP`: durable current placement/version, at most one active row per character, consistent with checkpoint world/map. `TRANSITION_RESULT` models idempotent approved handoff results; policy is unavailable until Owner decides. Presence is not membership, and thresholds alone do not authorize transfer.
+- `WORLD`, `MAP_REVISION`, `PARTITION`: approved versioned metadata and geometry references/checksums. No world dimensions or realm unlock rules are seeded now.
+- `CHARACTER_POSITION`: one latest durable checkpoint, finite canonical coordinates, map/partition FK, generation/epoch/version/tick metadata. Bounds are validated by the authoritative writer against that map revision, not an invalid cross-table CHECK assumption.
+- `OWNER_LEASE`, `CONTROL_GRANT`: durable coordination, distinct from Redis presence. Owner epoch is monotonic per partition; control generation is monotonic per character. Compare the full fence identity, not epochs from different partitions.
+- `REQUEST_RESULT`: unique `(account, operation, idempotency_key)` plus request digest/result. Same key with different payload is a conflict.
+- `TICKET_REDEMPTION`: unique ticket ID recorded with the grant transaction; prevents replay even if Redis failover resurrects a consumed cache record. Retention covers ticket validity and the approved safety window.
+- `OUTBOX_EVENT`: transactional metadata events (creation/approved membership changes), event ID and aggregate version. Consumers deduplicate; this is not a movement event log or an exactly-once guarantee.
+
+Durability proposal: periodic fenced checkpoints plus explicit lifecycle checkpoints, not a PostgreSQL write per input/frame. Crash recovery can roll back uncheckpointed movement. Checkpoint interval/RPO/RTO require approval; zero-loss movement would need a different durable-log cost model. See [ADR-0004](adr/0004-postgres-durability-and-fencing.md).
+
+## 9. Redis key strategy
+
+Redis is a cache/ephemeral layer with isolated credentials per environment and an additional `tt:<env>:v2:` namespace. Proposed keys and exact ownership/expiry behavior are in [ADR-0005](adr/0005-redis-presence-and-messaging.md).
+
+- Partition-scoped presence, membership indexes and owner hints use a shared hash tag for atomic local-key scripts.
+- Ticket lookup uses a digest, never a raw token. Redis consume is atomic; durable redemption uniqueness is checked separately in PostgreSQL.
+- Presence expires and is rebuilt from valid runtime owners; expiration alone never means a character was deleted or that a new owner may start.
+- Pub/Sub is only disposable rendering fan-out. Redis documents at-most-once delivery; critical durable metadata uses a PostgreSQL outbox and idempotent delivery instead. [Redis Pub/Sub](https://redis.io/docs/latest/develop/pubsub/).
+- Old cleanup compares session/control/owner generations before deleting; it cannot erase a newer connection's presence.
+
+## 10. Reconnect, failures and recovery
+
+```mermaid
+stateDiagram-v2
+  [*] --> AwaitingAuth
+  AwaitingAuth --> Active: Valid ticket, ownership and current grant
+  AwaitingAuth --> Closed: Invalid, expired or timed out
+  Active --> Recovering: Transport loss or state gap
+  Active --> Frozen: Lease, authority or durability boundary unsafe
+  Recovering --> Active: Fresh admission and authoritative full snapshot
+  Recovering --> Closed: Recovery denied or policy unavailable
+  Frozen --> Recovering: Dependency healthy and new verified authority
+  Active --> Closed: Logout, revocation or controlled shutdown
+  Closed --> [*]
+```
+
+- **Transport loss:** immediately stop accepting input on the dead binding; expire/zero intent independently of socket close. Cleanup is idempotent, generation-aware and cannot remove a newer session. Retain or despawn the visible entity only according to approved disconnect policy; no invented combat protection/offline simulation.
+- **Healthy-owner reconnect:** reverify identity/ownership; issue a fresh one-use ticket and new control generation; return current authoritative memory position and a full snapshot. Do not replay buffered old input. Another live tab needs an approved reject/takeover policy; dual control is never allowed.
+- **Owner crash:** wait for the durable owner lease to expire, acquire a higher epoch, restore committed checkpoints and re-admit with new generations. Redis state may be fresher but is not authoritative recovery data. Pending input from the old epoch is discarded.
+- **PostgreSQL unavailable/lease renewal failure:** no new admissions or durable commands. Freeze affected authority when a critical checkpoint/lease operation fails; never continue after the conservative local lease deadline. Resume only through verified ownership and resync, not guessed Redis locks.
+- **Redis unavailable:** new ticket/admission/presence operations fail closed. Existing in-process simulation may continue only with valid database authority and a direct healthy delivery path; cross-node routes without trustworthy owner/state delivery freeze/resync. Presence becomes unknown. Redis recovery cannot spawn a second owner.
+- **Pub/Sub gap/slow client:** bounded buffers, detect gaps, discard dependent deltas and request a full baseline; disconnect persistently slow clients rather than grow memory without bound.
+- **Map revision mismatch:** explicit unavailable/recovery decision, never an unapproved relocation.
+
+Authority loss may temporarily reduce availability. The proposal favors one authoritative history over split-brain movement. Detailed fencing and recovery proof obligations are in ADR-0002/0004/0006.
+
+## 11. Security considerations
+
+Use WSS/HTTPS outside loopback, exact Origin allowlists, handshake deadlines, per-IP/account/character budgets, strict message schemas and bounded sizes/queues. Origin is not identity. M2 local test adapters cannot support public deployment. Future real Auth must enforce provider expiry/revocation within approved bounds; M2 tests exercise the interface's validity/revocation contract, not real JWT security.
+
+Browser receives approved API responses only; no direct authoritative world/position writes. A future provider integration does not confer database authority automatically. Backend uses a restricted database role and explicit ownership checks. RLS is defense in depth where applicable, not an assumption that a validated identity sets pooled connection claims. Service keys can bypass RLS and must never reach the browser. [Supabase RLS documentation](https://supabase.com/docs/guides/database/postgres/row-level-security).
+
+Do not log tokens/tickets/raw authentication frames or private entity fields. Store secrets only in runtime secret configuration. Internal gateway/owner communication is authenticated and private; routing hints or client-chosen IDs do not authorize writes. Replays, forged timestamps, stale generations, speed injection and concurrent control are explicitly rejected. Logging/retention, ban policy and instant-versus-bounded revocation requirements remain approval items.
+
+## 12. Scalability trade-offs
+
+AOI reduces fan-out from naive all-player broadcast but does not solve a crowded simulation hotspot. Measure per-owner tick time, queue age, checkpoint latency, socket backpressure and visible-entity count before choosing partition size, publish rate or process count. No CCU/latency promise is made without a defined workload and benchmark.
+
+Scale gateways independently from owners. Initial one-partition-per-world keeps cross-boundary semantics simple; later spatial partitions preserve the same logical world but require fenced handoff, border AOI and atomic membership transitions. Multiple copies/channels or gameplay world transfers need separate approval. Do not claim seamless world transitions in M2 before their rules and handoff tests are approved.
+
+## 13. Owner decisions and implementation gate
+
+- **PO-01 — RESOLVED:** M2 identity interfaces only; real Auth is excluded. Login/session UX, providers and token storage await a later integration milestone.
+- **PO-02 — Product Owner Decision Pending:** Character quota, naming/rename/delete policies and duplicate tab/control conflict behavior. Multi-character ownership support is confirmed; no quota is hardcoded. Player-profile cardinality/semantics above remain a technical proposal for review.
+- **PO-03 — Product Owner Decision Pending:** Starting world, entry eligibility, transition trigger/cost/limits, reverse travel and fate-point preservation/reset. Three worlds and the two ascension thresholds are confirmed; none implies free travel or answers the remaining policies.
+- **PO-04 — Product Owner Decision Pending:** Map revisions/dimensions/units, navigability, spawn regions/randomness constraints and any occupancy/safety rules.
+- **PO-05 — Product Owner Decision Pending:** Movement directions/diagonals, speed per world, collision semantics and acceptable lag/input-age behavior. No M1 demo values carry over automatically.
+- **PO-06 — Product Owner Decision Pending:** Disconnect visibility/despawn/grace behavior, reconnect window and allowed checkpoint rollback (RPO/RTO). No offline rewards or combat protection assumed.
+- **PO-07 — Product Owner Decision Pending:** Target CCU per world/area, latency/resource budgets, rollout topology and load-test workload.
+- **PO-08 — Product Owner Decision Pending:** Security/session expiry/revocation and operational retention targets; approval of the technical timer/queue budget registry in ADRs.
+- **PO-09 — Product Owner Decision Pending:** Luyện Hư threshold, sub-realm thresholds and unresolved economy, HP/damage, PvP, death/cultivation/tribulation mechanics. Preserve all confirmed facts in [game rules reference](GAME_RULES_REFERENCE.md), including the Đạo Tổ cross-map name/combat capability; do not implement progression/combat or infer damage/targeting semantics. Future approved cross-world name visibility needs a deliberately scoped public projection, not an exception exposing private world/player state now.
+
+Recommendations may be reviewed now while answers are pending; the affected implementation/configuration cannot silently substitute defaults. See [M2 plan](M2_PLAN.md), [acceptance criteria](M2_ACCEPTANCE_CRITERIA.md) and [ADR index](adr/README.md).
