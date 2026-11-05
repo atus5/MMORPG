@@ -2,6 +2,8 @@
 
 Status: DESIGN ONLY. [M1 acceptance](M1_ACCEPTANCE.md) is PASS. This plan does not authorize implementation, database access, migrations, deployment or merge. Independent Gemini Architecture Review and Owner approval are required first.
 
+Later Owner authorization enables only the [M2 Vertical Slice](M2_VERTICAL_SLICE.md): local/test server fixtures, one development world/partition, approved expiry/resync/release semantics and RAM-only lifetime, plus the explicitly approved sandbox/budget/fixture parameters. Its implementation/review is separate from the future full-M2 phases below. No PostgreSQL/Redis/Auth/transition phase is enabled; ADRs remain PROPOSED and other unresolved decisions pending.
+
 Documentation history: R1 edited the three M2 documents and existing ADR-0001..0006 for NR-M2-001..008 on 2026-11-05. A separate authorized task then sealed R1 package `30899759-0943-4802-b63d-cc9f10b64d5d`; its immutable bytes remain historical evidence. R2 addresses advisory R1-001..003 within the existing whitelist and uses fix count 2/3. All ADRs remain PROPOSED. README, M1 source/tests, confirmed rules, policies and schemas remain outside the documentation edit scope. The phases below are future gated implementation work, not work executed during these revisions.
 
 ## Gate D0 — approve design inputs

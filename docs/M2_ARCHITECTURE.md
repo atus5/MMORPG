@@ -2,6 +2,8 @@
 
 Status: **PROPOSED / DESIGN ONLY**. M1 is [accepted PASS](M1_ACCEPTANCE.md). No M2 code, schema, Redis service or migration exists as a result of this document. Implementation gate: **CLOSED until independent Gemini architecture review and Owner approval**.
 
+Owner has separately authorized the bounded [local/test M2 Vertical Slice](M2_VERTICAL_SLICE.md), including three explicit parameter/lifecycle approvals. That in-memory one-world/partition implementation is now awaiting its own independent code review; this full architecture, durable PostgreSQL/Redis design and all ADR statuses remain PROPOSED. Only the slice's enumerated identity/world/input/persistence decisions are approved; every other unresolved PO-02..PO-09 policy remains pending. The historical architecture gate above does not deny the later, limited slice authorization or approve full M2.
+
 All ADRs are proposals. Owner-confirmed world/progression facts are preserved verbatim in meaning in [game rules reference](GAME_RULES_REFERENCE.md); missing policies remain **Product Owner Decision Pending**. A technical recommendation below is not a configured game rule. Owner has decided: **M2 identity interfaces only; no real Auth integration**.
 
 Documentation history: the R1 editing task on 2026-11-05 addressed NR-M2-001..008 and created no snapshot during editing; a separate Owner-authorized task subsequently sealed R1 package `30899759-0943-4802-b63d-cc9f10b64d5d` at `8f5f7d7ece3e5172bf1583fc3127908b5e605136`. Round 2 addresses advisory findings R1-001..003. Documentation and snapshot authorization do not accept ADRs, settle pending product policies or authorize implementation; each package records its own round and evidence.

@@ -45,3 +45,29 @@ Backend tests cover handshake/ping, validation, origin, capacity/rate/size/binar
 Later milestones require Owner-confirmed gameplay rules, verified Auth identity, persistence/RLS separately, shared simulation, TLS and production admission/observability. Nothing here authorizes deployment or Supabase access.
 
 Primary references checked for M1: [Next.js lazy loading](https://nextjs.org/docs/app/guides/lazy-loading), [FastAPI WebSockets](https://fastapi.tiangolo.com/advanced/websockets/), [WebSocket tests](https://fastapi.tiangolo.com/advanced/testing-websockets/), [Pydantic strict mode](https://docs.pydantic.dev/latest/concepts/strict_mode/), [Phaser scale manager](https://docs.phaser.io/phaser/concepts/scale-manager).
+
+## Separate local Vertical Slice protocol v2
+
+The v1 endpoint above remains unchanged. The explicitly enabled [Vertical Slice](M2_VERTICAL_SLICE.md) uses `POST /m2/session` (no body/query), then WebSocket `/m2/ws` with the server-issued opaque HttpOnly fixture cookie. Exact Origin and loopback source checks apply; no request can select an adapter or arbitrary Account/Player/Character ID. This is a local harness, not real Auth. Server bootstrap selects one of two fixtures; a duplicate active control is rejected. No ticket/token appears in a URL, log or replicated entity field.
+
+Input retains the approved cardinal vocabulary and adds the current server-provided generation:
+
+```json
+{"type":"input","seq":1,"direction":"right","generation":1}
+{"type":"input","seq":2,"direction":"idle","generation":1}
+{"type":"ping","seq":3}
+```
+
+All objects are strict; extra IDs/coordinates/speed/client timestamps are rejected. Sequence increases across both message families per connection. Ping never renews intent. Non-idle after expiry is rejected until idle/release then a new directional sample. The browser sends actual press/release callbacks between render frames and renews unexpired held input every 100ms; it suppresses physical held-key/OS-repeat resumption after expiry until release/repress.
+
+Welcome is `type: welcome, protocol: 2`, with `connection_id`, `world: {id: development, partition: single, width: 1600, height: 1000}`, `tick_hz: 20`, and the common baseline fields below. Welcome precedes state on a binding.
+
+- `boot_id`, `self_id`, `generation`: current server process/runtime entity/control identities. Private fixture Account/Player/Character IDs are not exposed.
+- `tick`, `stream_seq`: closed simulation tick and monotonic full-baseline publication sequence. Multiple full states may share a tick after membership/control changes. There are no deltas; coalesced full-state sequence gaps do not require delta repair.
+- `player: {x,y}`, `players: [{id,label,x,y}]`: own position and all currently active public entities, including self, at most two distinct IDs. Own coordinates must match its entry. Bounds, finite values, boot/self identity, generation and stream ordering are validated before rendering.
+- `ack_received`, `ack_applied`: highest admitted/closed-interval-consumed movement sequence in the current generation. Pings do not receive a movement/durability ACK. There is no durable checkpoint ACK because no persistent storage exists.
+- `release_required`: expired/frozen intent must be released before a fresh press. Normal `type: state` contains `reason: null`. Explicit `type: resync` contains one of `stale_input`, `admission_timeout`, `queue_overflow`, `timeline_uncertain`, a newer generation, cleared intent ACKs and the authoritative last-integrated baseline. Sequence continues per socket; old-generation input cannot affect it.
+
+Every baseline is complete. Outbound obsolete normal states may coalesce; welcome/resync/control messages are preserved or the slow binding closes. Disconnect clears client peers/old avatar; reconnect rotates control without duplicating membership, using the same RAM position. Server restart invalidates the cookie registry, creates new boot/entity/control state and resets spawn positions. New fixture allocation after restart is not persistent recovery.
+
+Receipt, admission and integration follow [ADR-0003](adr/0003-movement-time-and-input-queue.md), with the now explicitly approved local budgets/expiry policy recorded in the slice guide. No admission waits for the next tick, no closed tick is changed, and expiry splits the ordered integral at its original deadline. The 25ms admission budget, 64/64/8 queues and two-tick catch-up limit are local/test approvals, not production SLOs. Other full-M2 pending policies remain pending.

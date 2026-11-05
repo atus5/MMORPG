@@ -1,6 +1,10 @@
 # Tu Tiên Online — M1 Game Foundation
 
-Bộ khung chạy **local**: Next.js + TypeScript → Phaser 3 → WebSocket → FastAPI. Chưa có Supabase/Auth/database, combat, tiến trình nhân vật hoặc thế giới nhiều người chơi. M1 đang chờ Gemini 4 Argon review độc lập; kết quả test của Codex không thay thế approval.
+Bộ khung chạy **local**: Next.js + TypeScript → Phaser 3 → WebSocket → FastAPI. M1 đã có acceptance được ghi tại [M1 acceptance](docs/M1_ACCEPTANCE.md). M2 Vertical Slice có hai fixture test do server cấp, một thế giới/partition chung và state chỉ trong RAM; implementation vẫn chờ review/acceptance riêng. Không có Supabase/Auth thật/database, combat hoặc progression.
+
+## M2 Vertical Slice — hai browser session
+
+Đọc [hướng dẫn M2 Vertical Slice](docs/M2_VERTICAL_SLICE.md) để chạy backend với `TU_APP_ENV=local`, `TU_M2_VERTICAL_SLICE=1`, **một worker**, rồi mở `http://127.0.0.1:3000/vertical-slice` ở hai browser profile độc lập. Server gán fixture/spawn, broadcast vị trí, reconnect giữ RAM position, restart tạo lại state. Giữ phím hết hạn phải thả rồi nhấn lại. Provider từ chối startup ngoài local/test; không có fallback identity production. Các bước M1 bên dưới vẫn áp dụng cho legacy demo `/` và `/ws`.
 
 ## Yêu cầu
 

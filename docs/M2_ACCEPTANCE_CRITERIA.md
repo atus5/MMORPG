@@ -2,6 +2,8 @@
 
 Status: PROPOSED. These are verification obligations, not executed M2 tests. M1 remains accepted at its R1 source commit. Architecture approval and implementation acceptance are separate gates.
 
+The subsequently authorized [M2 Vertical Slice](M2_VERTICAL_SLICE.md) implements/tests only its explicit local/test subset. Its handoff records actual runtime results separately from the historical documentation checks and future full-M2 criteria below. T-11/T-12 real receiving-path behavior, identity/replication/reconnect and restart are exercised within that slice; PostgreSQL/Redis/real-Auth/distributed criteria remain outside scope and NOT_IMPLEMENTED/NOT_RUN. No full-M2 acceptance or ADR status change follows from slice tests.
+
 R1 documentation mapped NR-M2-001..008; R2 clarifies advisory findings R1-001..003 without accepting ADRs or pending policies. The R1 editing task on 2026-11-05 was followed by a separately authorized immutable snapshot, package `30899759-0943-4802-b63d-cc9f10b64d5d`. Round-specific snapshot authorization/evidence belongs in its handoff. All runtime, database concurrency, Redis, real Auth, browser/load/fault scenarios below are future specifications, NOT_RUN in these documentation revisions. Only appropriate document checks may be reported as executed.
 
 ## D — design approval gate
