@@ -1,0 +1,13 @@
+#!/bin/sh
+# Synchronous and bounded. Git Bash supplies this shell on Windows.
+[ "${TU_AUTOMATION_INTERNAL:-}" = "1" ] && exit 0
+branch=$(git symbolic-ref --quiet --short HEAD) || exit 0
+[ "$branch" = "tu" ] || exit 0
+root=$(git rev-parse --show-toplevel) || exit 0
+if command -v powershell.exe >/dev/null 2>&1; then
+  powershell.exe -NoLogo -NoProfile -NonInteractive -File "$root/.automation/orchestrator.ps1" -FromHook
+else
+  echo 'Tu review BLOCKED: Windows PowerShell is required.' >&2
+fi
+# post-commit cannot undo a successful commit. Review state is recorded separately.
+exit 0

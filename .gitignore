@@ -1,0 +1,15 @@
+/supabase/.temp/
+/.agents/state/
+.env
+.env.*
+!.env.example
+node_modules/
+__pycache__/
+.pytest_cache/
+.next/
+.venv/
+.ruff_cache/
+*.tsbuildinfo
+test-results/
+playwright-report/
+/.m1-local/

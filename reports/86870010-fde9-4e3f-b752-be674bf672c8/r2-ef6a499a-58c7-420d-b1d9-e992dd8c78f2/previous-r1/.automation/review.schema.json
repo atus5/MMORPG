@@ -1,0 +1,151 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "commit_sha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "parent_sha": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "files_reviewed": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 20000
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "CRITICAL",
+              "HIGH",
+              "MEDIUM",
+              "LOW"
+            ]
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000
+          },
+          "file": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000
+          },
+          "impact": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000
+          },
+          "recommended_fix": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000
+          },
+          "verification_steps": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20000
+            },
+            "minItems": 1
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "REQUIRED",
+              "OPTIONAL"
+            ]
+          },
+          "confirmed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "severity",
+          "confidence",
+          "category",
+          "file",
+          "line",
+          "description",
+          "evidence",
+          "impact",
+          "recommended_fix",
+          "verification_steps",
+          "action",
+          "confirmed"
+        ]
+      }
+    },
+    "test_results": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 20000
+      }
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "CHANGES_REQUIRED"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "commit_sha",
+    "parent_sha",
+    "files_reviewed",
+    "findings",
+    "test_results",
+    "verdict"
+  ]
+}

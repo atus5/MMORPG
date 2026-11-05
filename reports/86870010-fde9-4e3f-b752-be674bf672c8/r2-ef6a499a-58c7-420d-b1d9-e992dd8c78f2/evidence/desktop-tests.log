@@ -1,0 +1,12 @@
+PASS: actual project marker exists and has exactly the expected content
+PASS: actual project blocks CLI operations
+PASS: actual project Codex adapter stops before client discovery
+PASS: actual project Gemini adapter stops before client discovery or authentication
+PASS: Desktop policy overrides a stale enabled record
+PASS: whole test fails when its isolated project marker is missing
+PASS: whole test fails when its isolated project marker is corrupt
+PASS: corrupt marker blocks both adapters before client calls
+PASS: fingerprint detects changes to DESKTOP_WORKFLOW.md
+PASS: fingerprint detects changes to GEMINI_REVIEW.md
+PASS: fingerprint detects missing Desktop workflow
+Desktop policy checks passed: 11; AI client resolutions: 0; AI process calls: 0; isolated negative child tests: 2; actual marker/history unchanged.

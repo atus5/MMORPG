@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "reviewer_model": "gemini-4-argon",
+  "reviewer_cli_version": "0.66.0",
+  "max_fix_attempts": 3,
+  "allowed_branch": "tu",
+  "review_trigger": "post-commit",
+  "auto_fix": true,
+  "auto_merge": false,
+  "auto_push_main": false,
+  "auto_push": false,
+  "report_path": "agentReport.md",
+  "report_history_path": "reports/",
+  "review_timeout_seconds": 180,
+  "fix_timeout_seconds": 300,
+  "test_timeout_seconds": 300,
+  "network_retries": 1,
+  "max_snapshot_bytes": 1500000,
+  "max_file_bytes": 250000,
+  "minimum_fix_confidence": 0.8,
+  "allowed_edit_roots": ["frontend/", "backend/", "supabase/migrations/", "tests/"],
+  "test_commands": []
+}
