@@ -8,6 +8,7 @@ from starlette.websockets import WebSocketState
 from app.config import Settings
 from app.connections import Session
 from app.m2.identity import TestStaticIdentityProvider
+from app.m2.movement import Movement
 from app.m2.routes import receive_inputs
 from app.m2.world import World
 
@@ -199,3 +200,70 @@ def test_old_cleanup_cannot_remove_new_binding_and_outbound_state_coalesces():
         assert not world.current(current)  # Control frames are never silently coalesced away.
 
     asyncio.run(run())
+
+
+@pytest.mark.parametrize(
+    "direction,expected",
+    [
+        ("right", (768.0, 500.0)),
+        ("left", (752.0, 500.0)),
+        ("down", (760.0, 508.0)),
+        ("up", (760.0, 492.0)),
+    ],
+)
+def test_approved_speed_integrates_four_directions_through_receive_path(direction, expected):
+    async def run():
+        clock, socket, world, binding = setup()
+        assert world.settings.demo_speed == 160.0
+        receiver = asyncio.create_task(receive_inputs(binding, world))
+        try:
+            await feed(socket, wire(binding, 1, direction))
+            clock.now = 0.05
+            world.advance(clock())  # Real Movement.integrate over the first closed 50ms interval.
+            movement = binding.member.movement
+            assert (movement.x, movement.y) == pytest.approx(expected)
+            assert movement.ack_applied == 1
+        finally:
+            receiver.cancel()
+            await asyncio.gather(receiver, return_exceptions=True)
+
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("admitted_at,end", [(0.0, 0.3), (0.025, 0.325), (0.025, 0.35)])
+def test_approved_lease_integrates_deadline_and_requires_release(admitted_at, end):
+    settings = Settings(m2_enabled=True, app_environment="test")
+    assert settings.demo_speed == 160.0
+    assert settings.input_lease_seconds == 0.3
+    clock = Clock()
+    movement = Movement(settings, (760.0, 500.0))
+    clock.now = admitted_at
+    assert movement.admit("right", 1, clock())
+    deadline = admitted_at + settings.input_lease_seconds
+    assert movement.projected_deadline == deadline
+
+    # Test the actual integrator at and across expiry, including a deadline inside a tick.
+    clock.now = end
+    movement.integrate(0.0, clock())
+    assert (movement.x, movement.y) == pytest.approx((808.0, 500.0))  # 160 * 0.300 = 48px.
+    assert movement.needs_release(clock())
+    clock.now = end + 0.05
+    movement.integrate(end, clock())
+    assert (movement.x, movement.y) == pytest.approx((808.0, 500.0))
+    assert not movement.admit("right", 2, clock())  # A held input cannot revive the expired lease.
+    cursor = clock()
+    clock.now = end + 0.1
+    movement.integrate(cursor, clock())
+    assert (movement.x, movement.y) == pytest.approx((808.0, 500.0))
+    assert movement.needs_release(clock())
+
+    # Only an explicit release and fresh press can grant a new interval of travel.
+    assert movement.admit("idle", 3, clock())
+    assert not movement.needs_release(clock())
+    cursor = clock()
+    clock.now = end + 0.125
+    assert movement.admit("right", 4, clock())
+    clock.now = end + 0.175
+    movement.integrate(cursor, clock())
+    assert (movement.x, movement.y) == pytest.approx((816.0, 500.0))  # New press: another 8px/50ms.
+    assert movement.ack_applied == 4
