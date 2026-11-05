@@ -14,9 +14,21 @@ The three worlds are shared logical spaces. AOI controls visible entities inside
 
 ### World Membership abstraction
 
-Durable membership relates Character ID to world/map/partition and version/lifecycle state. At most one active membership exists per character; checkpoint placement and control grant must reference that same placement. Membership survives transport loss and Redis expiry. Its lifecycle policy does not assume an offline character remains visible or protected; those are separate Owner decisions.
+World Membership is the canonical durable placement. Character ID identifies the avatar; Player ID identifies its stable owning profile; `membership_id` identifies a placement lifecycle and `membership_version` its revision. None is a socket ID. The full world/map/partition tuple belongs to membership, and position checkpoints/control grants reference that identity and version rather than maintaining an independently selectable world. At most one active membership exists per character. Membership survives transport loss and Redis expiry. Its lifecycle policy does not assume an offline character remains visible or protected; those are separate Owner decisions. Whether a future approved transition advances a membership version or creates a successor lifecycle needs an explicit policy; this proposal supplies no default.
 
 Server-only first spawn uses approved world eligibility, versioned navigable geometry and bounded random sampling. Persist the idempotent membership/position result before publishing the entity. Missing policy or valid geometry fails explicitly. Reconnect restores, not rerolls. Map-revision incompatibility cannot silently teleport the character.
+
+### First-spawn transaction — NR-M2-003
+
+Prepare a candidate only from an approved starting-world/eligibility policy and immutable versioned geometry outside the database transaction. Sampling is bounded; no Redis or external RPC occurs while database locks are held. Preparation is tentative: it grants neither placement nor permission to publish.
+
+Use [ADR-0004's proposed lock matrix](0004-postgres-durability-and-fencing.md#operation-level-lock-matrix--nr-m2-005). Lock the Account/Player/Character anchors even if membership, checkpoint or grant rows do not exist yet; a missing child row cannot serialize concurrent first spawn. Revalidate ownership/account/principal state and inspect canonical membership after acquiring the anchors. Discover the required partition set under that protection, then lock it in the declared order; if the required set changes, abort and restart instead of acquiring an earlier-ranked lock late.
+
+After all required locks, revalidate approved policy/version, geometry revision, candidate validity, advancing database-time lease validity, owner epoch and current membership/control state. Any dynamic occupancy/separation predicate is used only if approved and given a separately validated serialization mechanism; a pre-lock candidate check alone is insufficient. Missing policy/geometry fails explicitly.
+
+Atomically commit one active membership, its initial checkpoint, matching control grant, operation request digest/result and required metadata outbox; admission-driven spawn also records unique ticket redemption in that transaction. Only publish/welcome after known commit and current authority checks. Concurrent same-key/same-request calls return the same durable result; same key/different request conflicts. Different operation keys still cannot create two active memberships because they serialize on the existing character anchor and durable uniqueness. If another operation already placed the character, restore/resolve that placement under current authorization, never reroll. Crash/uncertain commit follows durable operation resolution, without guessing abort or creating a second spawn.
+
+Starting world, starting realm, fixture geometry and persistence target remain Owner-pending. This transaction specification does not select them or implement spawning.
 
 ### World Transition abstraction
 

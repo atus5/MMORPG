@@ -31,6 +31,12 @@ Critical metadata changes originate in the PostgreSQL transactional outbox. A re
 
 Redis unavailable: deny new ticket/presence admissions. Existing direct in-process simulation may continue only while database authority and delivery remain healthy; cross-node state/route uncertainty freezes/resynchronizes affected sessions. Online status is unknown, not a durable logout/deletion. Rebuild cache after dependency recovery without creating another authority. Redis restore may revive ticket bytes, so check their explicit expiry and durable redemption ID again.
 
+### Ticket cache is not redemption authorization — NR-M2-006
+
+A consumed/restored Redis record supplies only a lookup reference. At redemption apply [ADR-0001's current principal and Account → Player → Character revalidation](0001-identity-and-session-admission.md#redemption-revalidation--nr-m2-006), including account status, ownership and canonical membership/control binding. Commit the durable unique ticket redemption with the resulting grant/result using [ADR-0004](0004-postgres-durability-and-fencing.md#operation-level-lock-matrix--nr-m2-005). Redis availability, atomic consume or a cache hit cannot replace these checks. Consume Redis before opening the database transaction; a later failure may require an explicitly authorized retry, not restoring a ticket as proof of eligibility.
+
+Unknown database commit outcome means no welcome or blind second grant. Resolve the original durable operation/redemption identity, including any still-in-flight transaction, and revalidate authorization before returning a result. A missing cache key is not evidence that the database committed or aborted. Cache rebuild never changes durable placement, principal validity or ticket redemption history.
+
 Keeping Redis disposable simplifies recovery but may reduce availability during cache loss. Local process maps are acceptable adapters for unit tests, not proof of multi-process safety. Redis deployment/auth/TLS/persistence/eviction/topology and capacity need operational review; key prefixes alone are not security isolation.
 
 ## Validation and approvals
