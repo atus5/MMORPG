@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { GameClient, Snapshot } from "../network/GameClient";
 
 // Keep the real scene's presentation logic, without booting a browser renderer in Node.
@@ -86,5 +86,86 @@ describe("F-001 scene presentation across reconnect failures", () => {
     view.render({ status, player: null });
     expect(view.state.lastDirection).toBe("idle");
     expect(view.player.visible).toBe(false);
+  });
+});
+
+afterEach(() => vi.unstubAllGlobals());
+
+describe("Vertical Slice input edges, release gate and peer lifecycle", () => {
+  function view() {
+    const host = {} as HTMLDivElement;
+    vi.stubGlobal("document", { activeElement: host, hidden: false });
+    let snapshot: Snapshot = {
+      status: "connected",
+      welcome: null,
+      player: { x: 760, y: 500 },
+      tick: 0,
+      ack: 0,
+      error: null,
+      verticalSlice: true,
+      releaseRequired: false,
+      generation: 1,
+      selfId: "self",
+      players: [],
+    };
+    const sendInput = vi.fn();
+    const scene = new FoundationScene(
+      { getSnapshot: () => snapshot, sendInput } as unknown as GameClient,
+      host,
+    );
+    const state = scene as unknown as {
+      player: ReturnType<typeof displayObject>;
+      worldReady: boolean;
+      peers: Map<string, ReturnType<typeof displayObject> & { destroy(): void }>;
+      renderState(): void;
+      sliceKey(e: KeyboardEvent, down: boolean): void;
+    };
+    Object.assign(state, { player: displayObject(), worldReady: true });
+    return {
+      scene,
+      state,
+      sendInput,
+      key(down: boolean, repeat = false) {
+        state.sliceKey({ code: "KeyD", repeat, preventDefault() {} } as KeyboardEvent, down);
+      },
+      render(next: Partial<Snapshot>) {
+        snapshot = { ...snapshot, ...next };
+        state.renderState();
+      },
+    };
+  }
+
+  it("sends press/release between render frames without waiting for update", () => {
+    const v = view();
+    v.key(true);
+    v.key(false);
+    expect(v.sendInput.mock.calls).toEqual([["right"], ["idle"]]);
+  });
+
+  it("does not resume a held key or OS repeat after expiry until release and fresh press", () => {
+    const v = view();
+    v.key(true);
+    v.render({ releaseRequired: true });
+    v.scene.update(500);
+    v.key(true, true);
+    expect(v.sendInput.mock.calls).toEqual([["right"]]);
+    v.key(false);
+    v.key(true);
+    expect(v.sendInput.mock.calls).toEqual([["right"], ["idle"], ["right"]]);
+  });
+
+  it("renders peer coordinates only from baselines and destroys stale peer representations", () => {
+    const v = view();
+    const peer = { ...displayObject(), destroy: vi.fn() };
+    v.state.peers.set("other", peer);
+    v.render({ players: [{ id: "other", label: "Test 2", x: 840, y: 500 }] });
+    expect(peer.x).toBe(840);
+    v.render({ players: [{ id: "other", label: "Test 2", x: 855, y: 500 }] });
+    expect(peer.x).toBe(855);
+    expect(v.state.peers.size).toBe(1);
+    v.render({ status: "disconnected", player: null });
+    expect(peer.destroy).toHaveBeenCalledTimes(1);
+    expect(v.state.peers.size).toBe(0);
+    expect(v.state.player.visible).toBe(false);
   });
 });

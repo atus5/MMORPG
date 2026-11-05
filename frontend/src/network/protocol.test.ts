@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clientMessage, serverMessage } from "./protocol";
+import { clientMessage, serverMessage, sliceClientMessage } from "./protocol";
 
 describe("protocol v1", () => {
   it("accepts only sequenced intents, never client coordinates or speed", () => {
@@ -19,5 +19,24 @@ describe("protocol v1", () => {
       );
     }
     expect(serverMessage.safeParse({ type: "combat", hp: 100 }).success).toBe(false);
+  });
+});
+
+describe("Vertical Slice input boundary", () => {
+  it("requires the current generation but never accepts identity, position or time authority", () => {
+    const input = { type: "input", seq: 1, direction: "right", generation: 1 };
+    expect(sliceClientMessage.safeParse(input).success).toBe(true);
+    for (const extra of [
+      { account_id: "other" },
+      { player_id: "other" },
+      { character_id: "other" },
+      { x: 999 },
+      { speed: 999 },
+      { timestamp: 0.01 },
+      { provider: "test" },
+    ])
+      expect(sliceClientMessage.safeParse({ ...input, ...extra }).success).toBe(false);
+    expect(sliceClientMessage.safeParse({ ...input, generation: 0 }).success).toBe(false);
+    expect(sliceClientMessage.safeParse({ type: "ping", seq: 2, direction: "right" }).success).toBe(false);
   });
 });

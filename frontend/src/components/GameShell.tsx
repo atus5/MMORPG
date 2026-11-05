@@ -16,8 +16,14 @@ const labels = {
   error: "Lỗi kết nối",
 };
 
-export function GameShell() {
-  const [client] = useState(() => new GameClient(process.env.NEXT_PUBLIC_WS_URL ?? "ws://127.0.0.1:8000/ws"));
+export function GameShell({ mode = "foundation" }: { mode?: "foundation" | "vertical-slice" }) {
+  const vertical = mode === "vertical-slice";
+  const [client] = useState(
+    () =>
+      new GameClient(process.env.NEXT_PUBLIC_WS_URL ?? "ws://127.0.0.1:8000/ws", undefined, {
+        verticalSlice: vertical,
+      }),
+  );
   const state = useSyncExternalStore(client.subscribe, client.getSnapshot, client.getSnapshot);
   useEffect(() => {
     client.connect();
@@ -32,7 +38,7 @@ export function GameShell() {
             TU TIÊN <em>ONLINE</em>
           </span>
         </Link>
-        <span className="milestone">M1 · GAME FOUNDATION</span>
+        <span className="milestone">{vertical ? "M2 · LOCAL VERTICAL SLICE" : "M1 · GAME FOUNDATION"}</span>
       </header>
       <section className="intro">
         <div>
@@ -57,7 +63,7 @@ export function GameShell() {
         <div className="panel-bar">
           <span className="location">
             <i />
-            Thanh Vân · Sandbox
+            {vertical ? "Thế giới thử nghiệm chung" : "Thanh Vân · Sandbox"}
           </span>
           <div className="connection">
             <span
@@ -92,6 +98,35 @@ export function GameShell() {
           </output>
         </div>
       </section>
+      {vertical && (
+        <section className="notes" aria-label="Người chơi trong thế giới local">
+          <article>
+            <h2>Hai phiên, cùng một thế giới.</h2>
+            <p data-testid="input-state" role="status">
+              {state.releaseRequired
+                ? "Input đã hết hạn hoặc đồng bộ lại. Thả phím rồi nhấn lại."
+                : state.status === "connected"
+                  ? "Sẵn sàng di chuyển."
+                  : "Đang chờ kết nối."}
+            </p>
+            <ul data-testid="players">
+              {(state.players ?? []).map((player) => (
+                <li
+                  key={player.id}
+                  data-entity-id={player.id}
+                  data-self={player.id === state.selfId}
+                  data-x={player.x}
+                  data-y={player.y}
+                >
+                  {player.label}
+                  {player.id === state.selfId ? " (bạn)" : ""}
+                  {` · X ${player.x.toFixed(1)} · Y ${player.y.toFixed(1)}`}
+                </li>
+              ))}
+            </ul>
+          </article>
+        </section>
+      )}
       {state.error && (
         <p className="error-message" role="alert">
           {state.error}
@@ -105,19 +140,23 @@ export function GameShell() {
         </article>
         <article>
           <span className="note-number">02 / SESSION</span>
-          <h2>Mỗi kết nối, một phiên thử.</h2>
-          <p>Phiên tạm trong bộ nhớ. Kết nối lại sẽ bắt đầu mới; chưa có đăng nhập hay lưu tiến trình.</p>
+          <h2>{vertical ? "Danh tính test do server cấp." : "Mỗi kết nối, một phiên thử."}</h2>
+          <p>
+            {vertical
+              ? "Kết nối lại giữ vị trí trong RAM. Restart backend tạo lại state; không có đăng nhập thật."
+              : "Phiên tạm trong bộ nhớ. Kết nối lại sẽ bắt đầu mới; chưa có đăng nhập hay lưu tiến trình."}
+          </p>
         </article>
         <article>
           <span className="note-number">03 / SCOPE</span>
-          <h2>Nền móng trước, thế giới sau.</h2>
+          <h2>{vertical ? "Một thế giới local, không persistence." : "Nền móng trước, thế giới sau."}</h2>
           <p>Chưa có chiến đấu, cảnh giới, cơ duyên hay luật PvP. Các thông số ở đây chỉ dành cho sandbox.</p>
         </article>
       </section>
       <footer className="page-footer">
         <span>TU TIÊN ONLINE</span>
         <span>Next.js · Phaser 3 · FastAPI · WebSocket</span>
-        <span>PROTOTYPE / M1</span>
+        <span>{vertical ? "LOCAL MULTIPLAYER / M2" : "PROTOTYPE / M1"}</span>
       </footer>
     </main>
   );

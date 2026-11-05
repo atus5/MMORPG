@@ -44,6 +44,153 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+const ownId = "105ac64f-5cd0-43d1-b0a8-d60170940ad0";
+const peerId = "fafb071a-f22f-4e2d-a33c-cb5118a5346b";
+const bootId = "12d5d9ed-0f2e-4696-b57f-877ca19b115d";
+const sliceFrame = {
+  boot_id: bootId,
+  self_id: ownId,
+  generation: 1,
+  tick: 0,
+  stream_seq: 1,
+  ack_received: 0,
+  ack_applied: 0,
+  release_required: false,
+  player: { x: 760, y: 500 },
+  players: [{ id: ownId, label: "Test 1", x: 760, y: 500 }],
+};
+const sliceWelcome = {
+  ...sliceFrame,
+  type: "welcome",
+  protocol: 2,
+  connection_id: welcome.connection_id,
+  world: { id: "development", partition: "single", width: 1600, height: 1000 },
+  tick_hz: 20,
+};
+
+async function setupSlice(bootstrap = vi.fn(async (_url: string) => {})) {
+  const sockets: FakeSocket[] = [];
+  const urls: string[] = [];
+  const client = new GameClient(
+    "ws://127.0.0.1:8000/ws",
+    (url) => {
+      urls.push(url);
+      const socket = new FakeSocket();
+      sockets.push(socket);
+      return socket as unknown as WebSocket;
+    },
+    { verticalSlice: true, bootstrap },
+  );
+  clients.push(client);
+  client.connect();
+  await vi.waitFor(() => expect(sockets).toHaveLength(1));
+  return { client, sockets, urls, bootstrap };
+}
+
+describe("Vertical Slice fixture, authority and recovery", () => {
+  it("bootstraps an opaque server fixture and replicates peers without optimistic movement", async () => {
+    const { client, sockets, urls, bootstrap } = await setupSlice();
+    expect(bootstrap).toHaveBeenCalledWith("http://127.0.0.1:8000/m2/session");
+    expect(urls).toEqual(["ws://127.0.0.1:8000/m2/ws"]);
+    sockets[0].receive(sliceWelcome);
+    client.sendInput("right");
+    expect(JSON.parse(sockets[0].sent[0])).toEqual({
+      type: "input",
+      seq: 1,
+      direction: "right",
+      generation: 1,
+    });
+    expect(client.getSnapshot().player).toEqual({ x: 760, y: 500 });
+    sockets[0].receive({
+      ...sliceFrame,
+      type: "state",
+      reason: null,
+      stream_seq: 2,
+      tick: 1,
+      ack_received: 1,
+      ack_applied: 1,
+      players: [...sliceFrame.players, { id: peerId, label: "Test 2", x: 830, y: 500 }],
+    });
+    expect(client.getSnapshot().players).toHaveLength(2);
+    client.disconnect();
+    expect(client.getSnapshot()).toMatchObject({ players: [], selfId: null, player: null, generation: 0 });
+  });
+
+  it("requires idle then a fresh press after resync and rejects stale server authority", async () => {
+    const { client, sockets } = await setupSlice();
+    sockets[0].receive(sliceWelcome);
+    client.sendInput("right");
+    sockets[0].receive({
+      ...sliceFrame,
+      type: "resync",
+      reason: "stale_input",
+      stream_seq: 2,
+      generation: 2,
+      release_required: true,
+    });
+    client.sendInput("right");
+    expect(sockets[0].sent).toHaveLength(1);
+    client.sendInput("idle");
+    client.sendInput("right");
+    expect(sockets[0].sent.map((s) => JSON.parse(s))).toEqual([
+      { type: "input", seq: 1, direction: "right", generation: 1 },
+      { type: "input", seq: 2, direction: "idle", generation: 2 },
+      { type: "input", seq: 3, direction: "right", generation: 2 },
+    ]);
+    sockets[0].receive({ ...sliceFrame, type: "state", reason: null, stream_seq: 3, generation: 1 });
+    expect(client.getSnapshot().status).toBe("error");
+    expect(client.getSnapshot().players).toEqual([]);
+  });
+
+  it("deduplicates pending bootstrap across setup/cleanup and ignores an obsolete attempt", async () => {
+    let resolve: (() => void) | undefined;
+    const bootstrap = vi.fn(
+      () =>
+        new Promise<void>((done) => {
+          resolve = done;
+        }),
+    );
+    const sockets: FakeSocket[] = [];
+    const client = new GameClient(
+      "ws://127.0.0.1:8000/ws",
+      () => {
+        const socket = new FakeSocket();
+        sockets.push(socket);
+        return socket as unknown as WebSocket;
+      },
+      { verticalSlice: true, bootstrap },
+    );
+    clients.push(client);
+    client.connect();
+    client.disconnect();
+    client.connect();
+    expect(bootstrap).toHaveBeenCalledTimes(1);
+    resolve?.();
+    await vi.waitFor(() => expect(sockets).toHaveLength(1));
+    sockets[0].receive(sliceWelcome);
+    expect(client.getSnapshot().status).toBe("connected");
+  });
+
+  it("rejects duplicate peer IDs and closes stalled bootstrap within the watchdog", async () => {
+    const { client, sockets } = await setupSlice();
+    sockets[0].receive({ ...sliceWelcome, players: [...sliceFrame.players, ...sliceFrame.players] });
+    expect(client.getSnapshot().status).toBe("error");
+    vi.useFakeTimers();
+    const stalled = new GameClient(
+      "ws://127.0.0.1:8000/ws",
+      () => {
+        throw new Error("Must not open before bootstrap");
+      },
+      { verticalSlice: true, bootstrap: () => new Promise<void>(() => {}) },
+    );
+    clients.push(stalled);
+    stalled.connect();
+    vi.advanceTimersByTime(5001);
+    expect(stalled.getSnapshot().status).toBe("error");
+    expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
 describe("GameClient lifecycle and authority", () => {
   it("waits for welcome and never moves the player optimistically", () => {
     const { client, sockets } = setup();

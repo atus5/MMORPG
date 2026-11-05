@@ -12,7 +12,8 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {
-      command: `"${python}" -m uvicorn app.main:app --app-dir ../backend --host 127.0.0.1 --port 8000 --ws-max-size 4096`,
+      command: `"${python}" -m uvicorn app.main:app --app-dir ../backend --host 127.0.0.1 --port 8000 --workers 1 --ws-max-size 4096 --ws-max-queue 64`,
+      env: { TU_APP_ENV: "local", TU_M2_VERTICAL_SLICE: "1" },
       url: "http://127.0.0.1:8000/health",
       reuseExistingServer: false,
       timeout: 30_000,
