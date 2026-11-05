@@ -4,7 +4,7 @@ Status: **PROPOSED / DESIGN ONLY**. M1 is [accepted PASS](M1_ACCEPTANCE.md). No 
 
 All ADRs are proposals. Owner-confirmed world/progression facts are preserved verbatim in meaning in [game rules reference](GAME_RULES_REFERENCE.md); missing policies remain **Product Owner Decision Pending**. A technical recommendation below is not a configured game rule. Owner has decided: **M2 identity interfaces only; no real Auth integration**.
 
-Documentation Revision R1 addresses NR-M2-001..008 only. Approval to revise these documents does not accept the ADRs, settle pending product policies or authorize implementation. No R1 package/snapshot or validation-run index is created in this task.
+Documentation history: the R1 editing task on 2026-11-05 addressed NR-M2-001..008 and created no snapshot during editing; a separate Owner-authorized task subsequently sealed R1 package `30899759-0943-4802-b63d-cc9f10b64d5d` at `8f5f7d7ece3e5172bf1583fc3127908b5e605136`. Round 2 addresses advisory findings R1-001..003. Documentation and snapshot authorization do not accept ADRs, settle pending product policies or authorize implementation; each package records its own round and evidence.
 
 ## 1. Scope and invariants
 
@@ -111,13 +111,17 @@ Recommendation: **fixed simulation steps + bounded ordered input-event queue + p
 
 NR-M2-001: distinguish owner observation time `t_received`, serialized successful queue admission `t_admitted` and later integration of the admitted timeline. Admission validates current binding/sequence/authority and reserves bounded capacity atomically with respect to tick closure; effective time is `t_admitted`. Neither socket timestamp nor client clock recovers time the owner never observed. Queue delay cannot grant retroactive motion. `ack_received_seq` follows admission, not observation.
 
+R1-001: stamp `t_received` at the earliest owner complete-event ingress callback, before the pending mailbox. Run admission as the next ordered input operation for that binding after bounded in-progress work/earlier events, continuously between ticks. Do not postpone admission to the tick-end mailbox drain, publication or a batch threshold: admitting right/idle received at `0.01`/`0.04` together at `0.05` loses their effective interval and fails the contract. Integration at closure consumes the already admitted timeline; it does not assign admission time. Keep the admission operation short and free of database/Redis/external RPC waits.
+
+Measure `input_admission_latency_seconds = t_admitted - t_received`, count/histogram/p50/p95/p99/max, pending depth/oldest admission age and budget-exceeded/reject/freeze counters. PO-07/08 must approve `T_admission_budget`, pending-queue limits and metric/alert settings; no threshold is selected. Budget overrun or unsafe backlog freezes the binding and requires authorized resync, without timestamp backfill. Measure event-loop lag separately because a pause before observation is outside this metric. Future [T-11/T-12](M2_ACCEPTANCE_CRITERIA.md#t--authoritative-movement-and-f-002) drive the real receive/decode/route/admission path with controlled server time and concurrent tick scheduling; they cannot inject `t_admitted` or use only the arithmetic integrator fixture to claim F-002 closure.
+
 Intervals are `[a,b)`. Closure seals the eligible admitted prefix; an event at `b` affects the next positive-duration segment. Equal timestamps use binding sequence order. Already admitted events retain effective time during bounded catch-up; a received event admitted after closure cannot reopen the old interval. Late-input rejection/current-time handling and acceptable input age remain PO-05 pending. No silent backfill or timestamp clamp is selected. If queue bounds, closure or clock continuity cannot preserve the admitted timeline, freeze affected movement and require authorized resync.
 
 NR-M2-007: distinguish directional samples, renewals of a current unexpired intent and transport ping/pong. Samples/renewals share strictly ordered binding sequences and intent generations. A valid renewal admitted before expiry may extend that intent from its admission time; ping/pong never does. At expiry the old intent stops accruing movement, and a later renewal cannot fill the idle gap or revive it. Direction change ends the previous sample at admission while preserving earlier segments. Whether a still-held key may submit a fresh sample after expiry or requires release/repress remains PO-05 pending, with no automatic resumption selected.
 
 NR-M2-004: split each fixed interval at every admitted transition/renewal effect and intent expiry. Apply approved velocity/duration and collision/bounds to each temporal segment in order; its resulting position starts the next segment. Never combine displacement before collision. Hitbox, sliding, bounce, diagonal behavior and geometry stay PO-04/05 pending. The simulation tick still closes once per interval; publication has an independent rate. See [ADR-0003](adr/0003-movement-time-and-input-queue.md) for the complete coupled temporal contract.
 
-F-002 reference case, using M1's demonstration values only: idle at `t=0`, right accepted at `0.01s`, idle accepted at `0.04s`, publish at `0.05s`. Proposed M2 displacement is `V × 0.03s` (4.8px only if a test fixture explicitly supplies M1's 160px/s). Raising tick rate alone does not preserve that lost press/release edge.
+F-002 arithmetic case, using M1's demonstration values only: idle at `t=0`, right admitted at `0.01s`, idle admitted at `0.04s`, publish at `0.05s`. Proposed M2 displacement is `V × 0.03s` (4.8px only if a test fixture explicitly supplies M1's 160px/s). This is not evidence for receiving-path correctness. The end-to-end fixture must observe actual generated admission times, retain a positive right segment, and compare displacement against those times and the approved latency/tolerance budget. Raising tick rate alone does not preserve the lost press/release edge.
 
 Simulation frequency, publishing frequency, input lease, movement speed/units and catch-up budgets are not selected production values here. M1's 20Hz / 50ms / 8px observation is evidence of the old behavior, not an approved M2 balance specification. M1 source is unchanged.
 
@@ -149,7 +153,9 @@ sequenceDiagram
   G-->>C: Welcome, session generation, baseline and applied ACK
   C->>G: Sequenced directional input intent
   G->>W: Route verified binding, not client-supplied identity
-  W->>W: Observe, admit bounded input, close tick and integrate ordered segments
+  W->>W: On each ingress event, stamp receipt and admit between ticks
+  Note over W: Admission never waits for the tick timer
+  W->>W: On tick timer, close interval and integrate admitted segments
   W-->>G: Versioned AOI state
   G-->>C: Snapshot or baseline-bound delta
   W->>P: Fenced checkpoint transaction
@@ -172,6 +178,8 @@ Conceptual model only. Physical schema/table names, existing objects, RLS and se
 
 ```mermaid
 erDiagram
+  %% WORLD_MEMBERSHIP is canonical placement; repeated checkpoint/grant placement fields are constrained projections, not independent assignments.
+  %% Keys/fields below are a conceptual sketch, not DDL or a newly approved physical schema.
   GAME_ACCOUNT ||--o{ IDENTITY_LINK : future_provider_mapping
   GAME_ACCOUNT ||--|| PLAYER_PROFILE : has_proposed_profile
   PLAYER_PROFILE ||--o{ CHARACTER : owns
@@ -245,12 +253,14 @@ erDiagram
 
 The diagram abbreviates keys. Partition identity is composite `(world_id, map_revision, partition_id)`; a map revision belongs to one world. Position/grant/lease references use complete composite identities, not globally unique partition names assumed by the drawing.
 
+R1-002 clarification: `WORLD_MEMBERSHIP` alone defines canonical placement. Repeated world/map/partition fields in `CHARACTER_POSITION` and the abbreviated partition field in `CONTROL_GRANT` depict derived placement projections for checkpoint validation/routing/fencing. They are not independent writable placement choices. Every accepted checkpoint/grant must match the referenced canonical `(membership_id, membership_version, world_id, map_revision, partition_id)` tuple and character; a stale version or mismatched tuple is rejected under the existing locks. The drawing alone does not enforce this invariant. Whether physical storage uses a join/projection or retained columns with an approved complete composite reference and transaction validation remains part of physical-schema review. No field/relationship or approved physical schema is changed by this clarification; no DDL or schema approval is inferred. [P-09](M2_ACCEPTANCE_CRITERIA.md#p--durability-and-authority-safety) specifies future mismatch-rejection tests.
+
 - `GAME_ACCOUNT`, `PLAYER_PROFILE`: separate stable Account ID and Player ID. Proposed unique account/profile link is a technical design recommendation. `IDENTITY_LINK` is a future provider mapping, not a M2 Auth implementation or permission to modify service-owned Auth tables.
 - `CHARACTER`: independent Character ID and player owner FK; the account owns many through its profile. Naming/account limits need policy. Creation locks the account policy/quota record if a cap is approved; no cap value or single-character uniqueness is introduced.
-- `WORLD_MEMBERSHIP`: durable current placement/version, at most one active row per character, consistent with checkpoint world/map. `TRANSITION_RESULT` models idempotent approved handoff results; policy is unavailable until Owner decides. Presence is not membership, and thresholds alone do not authorize transfer.
+- `WORLD_MEMBERSHIP`: canonical durable current placement/version, at most one active row per character. Checkpoint/grant placement projections derive from and must match its complete tuple, not the reverse. `TRANSITION_RESULT` models idempotent approved handoff results; policy is unavailable until Owner decides. Presence is not membership, and thresholds alone do not authorize transfer.
 - `WORLD`, `MAP_REVISION`, `PARTITION`: approved versioned metadata and geometry references/checksums. No world dimensions or realm unlock rules are seeded now.
-- `CHARACTER_POSITION`: one latest durable checkpoint, finite canonical coordinates, map/partition FK, generation/epoch/version/tick metadata. Bounds are validated by the authoritative writer against that map revision, not an invalid cross-table CHECK assumption.
-- `OWNER_LEASE`, `CONTROL_GRANT`: durable coordination, distinct from Redis presence. Owner epoch is monotonic per partition; control generation is monotonic per character. Compare the full fence identity, not epochs from different partitions.
+- `CHARACTER_POSITION`: one latest durable checkpoint with finite coordinates, membership identity/version, derived map/partition projection and generation/epoch/version/tick metadata. Validate the projection against canonical membership and bounds against that map revision; an invalid cross-table CHECK assumption cannot replace the approved physical constraint/transaction design.
+- `OWNER_LEASE`, `CONTROL_GRANT`: durable coordination, distinct from Redis presence. The grant's placement projection must match its membership reference and full lease fence. Owner epoch is monotonic per partition; control generation is monotonic per character. Compare the full fence identity, not epochs from different partitions.
 - `REQUEST_RESULT`: unique `(account, operation, idempotency_key)` plus request digest/result. Same key with different payload is a conflict.
 - `TICKET_REDEMPTION`: unique ticket ID recorded with the grant transaction; prevents replay even if Redis failover resurrects a consumed cache record. Retention covers ticket validity and the approved safety window.
 - `OUTBOX_EVENT`: transactional metadata events (creation/approved membership changes), event ID and aggregate version. Consumers deduplicate; this is not a movement event log or an exactly-once guarantee.
@@ -317,17 +327,17 @@ Scale gateways independently from owners. Initial one-partition-per-world keeps 
 - **PO-04 — Product Owner Decision Pending:** Map revisions/dimensions/units, navigability, spawn regions/randomness constraints and any occupancy/safety rules.
 - **PO-05 — Product Owner Decision Pending:** Movement directions/diagonals, speed per world, collision semantics, late-input treatment, acceptable lag/input age and whether a still-held key after expiry requires release/repress or an approved fresh sample. No automatic resumption or M1 demo value is selected.
 - **PO-06 — Product Owner Decision Pending:** Disconnect visibility/despawn/grace behavior, reconnect window and allowed checkpoint rollback (RPO/RTO). No offline rewards or combat protection assumed.
-- **PO-07 — Product Owner Decision Pending:** Target CCU per world/area, latency/resource budgets, rollout topology and load-test workload.
-- **PO-08 — Product Owner Decision Pending:** Security/session expiry/revocation and operational retention targets; approval of the technical timer/queue budget registry in ADRs, transaction/lock/batch/renewal limits and principal validity/revocation freshness contract. Fixture isolation/lifetime and the local/non-production persistence target also require approval with Gate D0; no adapter/target defaults are selected.
+- **PO-07 — Product Owner Decision Pending:** Target CCU per world/area, latency/resource budgets (including receive-to-admission latency and pending ingress queues), rollout topology and load-test workload. No admission-latency threshold or test tolerance is selected.
+- **PO-08 — Product Owner Decision Pending:** Security/session expiry/revocation and operational retention targets; approval of the technical timer/queue budget registry in ADRs, admission-latency/pending-queue/metric-alert settings, transaction/lock/batch/renewal limits and principal validity/revocation freshness contract. Fixture isolation/lifetime and the local/non-production persistence target also require approval with Gate D0; no adapter/target defaults are selected.
 - **PO-09 — Product Owner Decision Pending:** Luyện Hư threshold, sub-realm thresholds and unresolved economy, HP/damage, PvP, death/cultivation/tribulation mechanics. Preserve all confirmed facts in [game rules reference](GAME_RULES_REFERENCE.md), including the Đạo Tổ cross-map name/combat capability; do not implement progression/combat or infer damage/targeting semantics. Future approved cross-world name visibility needs a deliberately scoped public projection, not an exception exposing private world/player state now.
 
 Recommendations may be reviewed now while answers are pending; the affected implementation/configuration cannot silently substitute defaults. See [M2 plan](M2_PLAN.md), [acceptance criteria](M2_ACCEPTANCE_CRITERIA.md) and [ADR index](adr/README.md).
 
 ## 14. Future review-package provenance — NR-M2-008
 
-This section specifies future evidence requirements only. The present R1 documentation revision creates no package/snapshot, validation-run index or report and changes no historical evidence. Owner document inspection precedes separate snapshot authorization.
+This section specifies review evidence requirements. The R1 editing task and its separately authorized snapshot task on 2026-11-05 were distinct: R1 package `30899759-0943-4802-b63d-cc9f10b64d5d` exists and remains immutable. Later snapshots require explicit Owner authorization for their round, recorded in handoff/provenance. Historical evidence is not rewritten, and package existence does not imply architecture acceptance.
 
-For this architecture chain, preserve original design base `d1e177ef32597071eda2184a61a6230970468b05`, session `a4435486-cbb4-4b6b-90ea-c41426f797e1`, r0 package `fa98c894-0853-4a75-b54f-b554f0cd17aa` and r0 HEAD `fabe8ad0c9d298cb5286af4331ecae0051c82836`. The latter is also the R1 editing baseline; it does not replace the original cumulative-review base. A future authorized r1 uses a new package UUID in the same session, retains the prior sealed package and records fix count 1/3 without resetting history.
+For this architecture chain, preserve original design base `d1e177ef32597071eda2184a61a6230970468b05`, session `a4435486-cbb4-4b6b-90ea-c41426f797e1`, r0 package `fa98c894-0853-4a75-b54f-b554f0cd17aa` and r0 HEAD `fabe8ad0c9d298cb5286af4331ecae0051c82836`. The latter is also the R1 editing baseline; it does not replace the original cumulative-review base. R1 used the new package UUID above at HEAD `8f5f7d7ece3e5172bf1583fc3127908b5e605136`, fix count 1/3. R2 consumes the second fix (2/3), retains the same session/original base and uses a new package UUID; no counter resets across chats or advisory reviewer changes.
 
 A future create-only package must identify its actual HEAD/parent/branch, dirty staged/unstaged/untracked status, cumulative diff from the original base and incremental changes from r0. Include full byte-preserved relevant tracked/untracked contents, previous/deleted versions where needed, included/excluded inventory with reasons, tests and finding dispositions separately from original reviewer findings. HEAD alone does not identify dirty work. Never rewrite an old package/report to represent the new round.
 
